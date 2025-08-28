@@ -1,0 +1,88 @@
+name: Migrate DB and Deploy to Vercel (Staging/Preview)
+
+on:
+  push:
+    branches: [ develop, staging ]
+  pull_request:
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    env:
+      # Vercel project identifiers (set in repo Settings → Secrets and variables → Actions)
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # Staging/preview database URLs
+      DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.STAGING_DIRECT_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run Prisma migrations against STAGING DB
+        run: npx prisma migrate deploy
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Pull Vercel Environment Info (Preview)
+        run: vercel pull --yes --environment=preview --token $VERCEL_TOKEN
+
+      - name: Build project (preview)
+        run: vercel build --token $VERCEL_TOKEN
+
+- name: Deploy to Vercel (Preview)
+  id: deploy_preview
+  run: |
+    set -e
+    url=$(vercel deploy --prebuilt --token "$VERCEL_TOKEN" | tail -n1 | tr -d '\n' | tr -d '\r')
+    echo "preview_url=$url" >> $GITHUB_OUTPUT
+    echo "Preview URL: $url"
+
+- name: Set commit status: preview-deploy
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    sha="${{ github.sha }}"
+    url="${{ steps.deploy_preview.outputs.preview_url }}"
+    api="https://api.github.com/repos/${{ github.repository }}/statuses/$sha"
+    payload=$(jq -n --arg state "success" --arg target_url "$url" --arg context "preview-deploy" --arg description "Vercel Preview is ready" '{state: $state, target_url: $target_url, context: $context, description: $description}')
+    curl -s -X POST -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "$api" -d "$payload"
+
+- name: Comment on PR with preview URL and promote shortcut
+  if: github.event_name == 'pull_request'
+  uses: actions/github-script@v7
+  with:
+    script: |
+      const pr = context.payload.pull_request;
+      const url = core.getInput('preview_url', { required: false }) || (process.env.PREVIEW_URL || '');
+      const previewUrl = url || (core.getState && core.getState('preview_url')) || '${{ steps.deploy_preview.outputs.preview_url }}';
+      const owner = context.repo.owner;
+      const repo = context.repo.repo;
+      const promoteWorkflow = 'promote-to-production.yml';
+      const body = [
+        `✅ **Preview is ready:** ${previewUrl}`,
+        '',
+        `**Promote to Production:**`,
+        `- Go to **Actions → Promote to Production (Manual)**`,
+        `- Click **Run workflow** and set \`ref\` to \`${pr.head.ref}\``
+      ].join('\n');
+      await github.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number: pr.number,
+        body
+      });
