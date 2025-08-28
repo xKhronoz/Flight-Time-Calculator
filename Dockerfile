@@ -1,31 +1,30 @@
-# --- Build stage ---
-FROM node:20-alpine AS deps
+# syntax=docker/dockerfile:1.5
+FROM node:20-alpine AS base
 WORKDIR /app
-COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
-# Prefer npm, but support others if lockfile exists
-RUN if [ -f package-lock.json ]; then npm ci;     elif [ -f pnpm-lock.yaml ]; then corepack enable && pnpm i --frozen-lockfile;     elif [ -f yarn.lock ]; then yarn --frozen-lockfile;     else npm i; fi
+ENV NODE_ENV=production
 
-FROM node:20-alpine AS builder
-WORKDIR /app
-ENV NEXT_TELEMETRY_DISABLED=1
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+COPY package*.json ./
+COPY prisma ./prisma
+RUN npm ci --include=dev
+
+FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
 RUN npm run build
 
-# --- Runtime stage ---
-FROM node:20-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
+FROM base AS runner
+RUN addgroup -S nextjs && adduser -S nextjs -G nextjs
+USER nextjs
 ENV PORT=3000
-ENV NEXT_TELEMETRY_DISABLED=1
-COPY --from=builder /app/node_modules ./node_modules
+ENV HOSTNAME=0.0.0.0
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY package.json .
-COPY prisma ./prisma
-COPY scripts ./scripts
-COPY entrypoint.sh ./entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/prisma ./prisma
 EXPOSE 3000
-CMD ["/app/entrypoint.sh"]
+# Run migrations at container start, then boot Next.js
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run start"]
