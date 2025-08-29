@@ -41,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: { iata: strin
         field: key,
         oldValue: oldVal == null ? null : String(oldVal),
         newValue: newVal == null ? null : String(newVal),
-        changedBy: changedBy ? `${changedBy} (restore-snapshot)` : "(restore-snapshot)",,
+        changedBy: changedBy ? `${changedBy} (restore-snapshot)` : "(restore-snapshot)",
         reason: reason
       }
     }));

@@ -57,7 +57,7 @@ export async function POST(req: NextRequest, { params }: { params: { iata: strin
         field: key,
         oldValue: (before as any)[k] == null ? null : String((before as any)[k]),
         newValue: (updated as any)[k] == null ? null : String((updated as any)[k]),
-        changedBy: changedBy ? `${changedBy} (rollback-to)` : "(rollback-to)",,
+        changedBy: changedBy ? `${changedBy} (rollback-to)` : "(rollback-to)",
         reason: reason
       }
     }));

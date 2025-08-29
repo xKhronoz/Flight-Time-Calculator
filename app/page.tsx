@@ -95,6 +95,12 @@ export default function Page() {
       const originTz = leg.originTz || 'UTC';
       const destTz = leg.destinationTz || 'UTC';
       try {
+        if (originTz === 'UTC') {
+          errors.push(`Warning: Time zone for origin ${leg.origin} not found. Calculation may be wrong.`);
+        }
+        if (destTz === 'UTC') {
+          errors.push(`Warning: Time zone for destination ${leg.destination} not found. Calculation may be wrong.`);
+        }
         const departUTC = parseLocalToUTC(leg.departDate, leg.departTime, originTz);
         const arriveUTC = parseLocalToUTC(leg.arriveDate, leg.arriveTime, destTz);
 
@@ -102,6 +108,9 @@ export default function Page() {
         if (!arriveUTC.isValid) throw new Error(`Invalid arrival date/time for ${leg.destination}`);
 
         const duration = arriveUTC.diff(departUTC, ['hours', 'minutes', 'seconds']);
+        if (duration.as('minutes') < 0) {
+          errors.push(`Error: Arrival time for leg ${leg.origin} → ${leg.destination} is before departure.`);
+        }
         legSummaries.push({
           id: leg.id,
           origin: leg.origin.toUpperCase(),
@@ -183,39 +192,39 @@ export default function Page() {
                 <div className="md:col-span-2">
                   <label className="block text-sm mb-1">From (IATA)</label>
                   <input className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                         placeholder="SIN"
-                         value={leg.origin}
-                         onChange={(e) => updateLeg(leg.id, { origin: e.target.value.toUpperCase(), originTz: undefined })} />
+                    placeholder="SIN"
+                    value={leg.origin}
+                    onChange={(e) => updateLeg(leg.id, { origin: e.target.value.toUpperCase(), originTz: undefined })} />
                   {leg.originTz && <p className="text-xs text-slate-400 mt-1">TZ: {leg.originTz}</p>}
                 </div>
                 <div className="md:col-span-3">
                   <label className="block text-sm mb-1">Depart (local)</label>
                   <div className="grid grid-cols-2 gap-2">
                     <input type="date" className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                           value={leg.departDate}
-                           onChange={(e) => updateLeg(leg.id, { departDate: e.target.value })} />
+                      value={leg.departDate}
+                      onChange={(e) => updateLeg(leg.id, { departDate: e.target.value })} />
                     <input type="time" className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                           value={leg.departTime}
-                           onChange={(e) => updateLeg(leg.id, { departTime: e.target.value })} />
+                      value={leg.departTime}
+                      onChange={(e) => updateLeg(leg.id, { departTime: e.target.value })} />
                   </div>
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm mb-1">To (IATA)</label>
                   <input className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                         placeholder="SEA"
-                         value={leg.destination}
-                         onChange={(e) => updateLeg(leg.id, { destination: e.target.value.toUpperCase(), destinationTz: undefined })} />
+                    placeholder="SEA"
+                    value={leg.destination}
+                    onChange={(e) => updateLeg(leg.id, { destination: e.target.value.toUpperCase(), destinationTz: undefined })} />
                   {leg.destinationTz && <p className="text-xs text-slate-400 mt-1">TZ: {leg.destinationTz}</p>}
                 </div>
                 <div className="md:col-span-3">
                   <label className="block text-sm mb-1">Arrive (local)</label>
                   <div className="grid grid-cols-2 gap-2">
                     <input type="date" className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                           value={leg.arriveDate}
-                           onChange={(e) => updateLeg(leg.id, { arriveDate: e.target.value })} />
+                      value={leg.arriveDate}
+                      onChange={(e) => updateLeg(leg.id, { arriveDate: e.target.value })} />
                     <input type="time" className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                           value={leg.arriveTime}
-                           onChange={(e) => updateLeg(leg.id, { arriveTime: e.target.value })} />
+                      value={leg.arriveTime}
+                      onChange={(e) => updateLeg(leg.id, { arriveTime: e.target.value })} />
                   </div>
                 </div>
 

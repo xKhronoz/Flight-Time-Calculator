@@ -31,3 +31,6 @@ coverage/
 *.log
 *.swp
 *.swo
+
+# Docker Volumes
+docker-data/

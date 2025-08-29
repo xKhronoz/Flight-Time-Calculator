@@ -38,8 +38,8 @@ export async function POST(req: NextRequest, { params }: { params: { iata: strin
       field: String(field),
       oldValue: before ? (before as any)[field] === null || (before as any)[field] === undefined ? null : String((before as any)[field]) : null,
       newValue: data[field] === null || data[field] === undefined ? null : String(data[field]),
-      changedBy: changedBy ? `${changedBy} (rollback)` : "(rollback)",,
-        reason: reason
+      changedBy: changedBy ? `${changedBy} (rollback)` : "(rollback)",
+      reason: reason
     }
   });
 
