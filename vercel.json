@@ -1,0 +1,4 @@
+{
+    "buildCommand": "sh -c 'prisma generate && if [ \"$VERCEL_ENV\" != \"development\" ]; then prisma migrate deploy; fi; next build'",
+    "outputDirectory": ".next"
+}

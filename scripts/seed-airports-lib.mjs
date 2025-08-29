@@ -37,47 +37,6 @@ async function tryLoadWorldAirports() {
   }
 }
 
-async function tryLoadAirportsData() {
-  try {
-    const mod = await import("airports-data");
-    const data = (mod && (mod.default || mod)) || {};
-    const rows = [];
-    if (data.iata) {
-      for (const [iata, rec] of Object.entries(data.iata)) {
-        rows.push({
-          iata: iata.toUpperCase(),
-          icao: rec.icao || null,
-          name: rec.name || rec.airport || null,
-          city: rec.city || null,
-          country: rec.country || null,
-          lat: rec.lat || rec.latitude || null,
-          lon: rec.lon || rec.longitude || null,
-          tz: rec.tz || rec.timezone || null,
-        });
-      }
-    } else {
-      for (const rec of Object.values(data)) {
-        if (!rec) continue;
-        const iata = (rec.iata || "").toUpperCase();
-        if (!iata) continue;
-        rows.push({
-          iata,
-          icao: rec.icao || null,
-          name: rec.name || rec.airport || null,
-          city: rec.city || null,
-          country: rec.country || null,
-          lat: rec.lat || rec.latitude || null,
-          lon: rec.lon || rec.longitude || null,
-          tz: rec.tz || rec.timezone || null,
-        });
-      }
-    }
-    return rows;
-  } catch {
-    return [];
-  }
-}
-
 async function loadFallbackCsv() {
   const p = path.join(process.cwd(), "data", "fallback-airports.csv");
   if (!fs.existsSync(p)) return [];
@@ -118,7 +77,6 @@ export async function runSeed(reset = false) {
   }
 
   let rows = await tryLoadWorldAirports();
-  if (!rows.length) rows = await tryLoadAirportsData();
   if (!rows.length) rows = await loadFallbackCsv();
 
   rows = rows.filter((r) => r.iata && r.iata.length === 3);

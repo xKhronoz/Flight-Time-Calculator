@@ -37,10 +37,6 @@ export function middleware(req: NextRequest) {
       }
     }
   }
-    if (!checkBasicAuth(req)) {
-      return unauthorized();
-    }
-  }
   return NextResponse.next();
 }
 

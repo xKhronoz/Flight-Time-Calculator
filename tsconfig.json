@@ -22,13 +22,19 @@
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
-    "next-env.d.ts",
+    "**/*.mjs",
     "**/*.ts",
     "**/*.tsx",
-    "**/*.mjs"
+    "next-env.d.ts",
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
