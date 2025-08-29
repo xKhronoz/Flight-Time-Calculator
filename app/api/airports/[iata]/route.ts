@@ -3,66 +3,93 @@ import { prisma } from "@/lib/prisma";
 import { getBasicAuthUser } from "@/app/api/_util/auth";
 import { createAirportSnapshot } from "@/app/api/_util/snapshot";
 import { requireReason } from "@/app/api/_util/reason";
+import type { Prisma } from "@prisma/client";
 
 // GET /api/airports/:iata
-export async function GET(_: NextRequest, { params }: { params: { iata: string } }) {
-  const iata = (params.iata || "").toUpperCase();
-  if (!iata || iata.length !== 3) {
+export async function GET(
+  _req: NextRequest,
+  ctx: { params: Promise<{ iata: string }> } // params is a Promise
+) {
+  const { iata: rawIata } = await ctx.params; // await it
+  const iata = (rawIata || "").toUpperCase();
+  if (iata.length !== 3) {
     return NextResponse.json({ error: "Invalid IATA" }, { status: 400 });
   }
+
   const airport = await prisma.airport.findUnique({ where: { iata } });
   if (!airport) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(airport);
 }
 
 // PATCH /api/airports/:iata  (admin-only via middleware)
-export async function PATCH(req: NextRequest, { params }: { params: { iata: string } }) {
-  const iata = (params.iata || "").toUpperCase();
-  if (!iata || iata.length !== 3) {
+export async function PATCH(
+  req: NextRequest,
+  ctx: { params: Promise<{ iata: string }> } // params is a Promise
+) {
+  const { iata: rawIata } = await ctx.params; // await it
+  const iata = (rawIata || "").toUpperCase();
+  if (iata.length !== 3) {
     return NextResponse.json({ error: "Invalid IATA" }, { status: 400 });
   }
-  const payload = await req.json().catch(() => ({}));
+
+  const payload = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const reason = await requireReason(req);
-  if (!reason) return NextResponse.json({ error: 'Reason is required' }, { status: 400 });
-  const allowed: any = {};
-  const fields = ["name", "city", "country", "timezone", "icao", "lat", "lon"];
+  if (!reason) return NextResponse.json({ error: "Reason is required" }, { status: 400 });
+
+  const fields = ["name", "city", "country", "timezone", "icao", "lat", "lon"] as const;
+  type EditableKey = typeof fields[number];
+
+  // Pick only allowed fields
+  const picked: Partial<Record<EditableKey, unknown>> = {};
   for (const k of fields) {
-    if (k in payload && payload[k] !== undefined) allowed[k] = payload[k];
+    if (k in payload && (payload as any)[k] !== undefined) picked[k] = (payload as any)[k];
   }
-  if (Object.keys(allowed).length === 0) {
+  if (Object.keys(picked).length === 0) {
     return NextResponse.json({ error: "No valid fields to update." }, { status: 400 });
   }
 
-  // coerce numbers
-  if (allowed.lat !== undefined) allowed.lat = typeof allowed.lat === "string" ? parseFloat(allowed.lat) : allowed.lat;
-  if (allowed.lon !== undefined) allowed.lon = typeof allowed.lon === "string" ? parseFloat(allowed.lon) : allowed.lon;
+  // Coerce numbers for lat/lon
+  if (picked.lat !== undefined && typeof picked.lat === "string") {
+    const n = parseFloat(picked.lat);
+    picked.lat = Number.isFinite(n) ? n : null;
+  }
+  if (picked.lon !== undefined && typeof picked.lon === "string") {
+    const n = parseFloat(picked.lon);
+    picked.lon = Number.isFinite(n) ? n : null;
+  }
 
   const before = await prisma.airport.findUnique({ where: { iata } });
   if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const updated = await prisma.airport.update({ where: { iata }, data: allowed });
+  // Type as Prisma update input
+  const updateData: Prisma.AirportUpdateInput = picked as Prisma.AirportUpdateInput;
+  const updated = await prisma.airport.update({ where: { iata }, data: updateData });
 
-  // write audit logs per field changed
-  const changedBy = getBasicAuthUser(req.headers.get('authorization') || req.headers.get('Authorization'));
-  const logs = [];
-  for (const key of Object.keys(allowed)) {
-    const oldVal = (before as any)[key];
-    const newVal = (updated as any)[key];
-    if (oldVal === newVal) continue;
-    logs.push(prisma.auditLog.create({
-      data: {
-        iata,
-        field: key,
-        oldValue: oldVal === null || oldVal === undefined ? null : String(oldVal),
-        newValue: newVal === null || newVal === undefined ? null : String(newVal),
-        changedBy: changedBy,
-        reason: reason,
-      }
-    }));
-  }
+  // Audit logs per changed field
+  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || undefined;
+  const changedBy = getBasicAuthUser(authHeader) || "(api)";
+
+  const logs = Object.keys(picked).flatMap((key) => {
+    const k = key as EditableKey;
+    const oldVal = (before as any)[k];
+    const newVal = (updated as any)[k];
+    if (oldVal === newVal) return [];
+    return [
+      prisma.auditLog.create({
+        data: {
+          iata,
+          field: k,
+          oldValue: oldVal == null ? null : String(oldVal),
+          newValue: newVal == null ? null : String(newVal),
+          changedBy,
+          reason,
+        },
+      }),
+    ];
+  });
   if (logs.length) await prisma.$transaction(logs);
 
-  // snapshot AFTER the update for O(1) restore
+  // Snapshot AFTER the update for O(1) restore
   await createAirportSnapshot(iata, changedBy);
 
   return NextResponse.json(updated);
