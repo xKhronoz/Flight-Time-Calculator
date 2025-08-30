@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Airport } from "@prisma/client";
 import fs from "node:fs";
 import path from "node:path";
 import tzLookup from "tz-lookup";
@@ -17,7 +17,27 @@ function uniqueBy<T>(array: T[], keyFn: (item: T) => string | null | undefined):
     return out;
 }
 
-interface AirportRow {
+function isValidIanaTz(tz?: string | null): tz is string {
+    if (!tz) return false;
+    try {
+        new Intl.DateTimeFormat("en-US", { timeZone: tz });
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function sanitizeIata(iata?: string | null): string | null {
+    const v = (iata || "").toUpperCase().trim();
+    return /^[A-Z0-9]{3}$/.test(v) ? v : null;
+}
+function sanitizeIcao(icao?: string | null): string | null {
+    const v = (icao || "").toUpperCase().trim();
+    if (!v) return null;
+    return /^[A-Z0-9]{3,4}$/.test(v) ? v.slice(0, 4) : null;
+}
+
+export interface AirportRow {
     iata: string;
     icao: string | null;
     name: string | null;
@@ -49,98 +69,151 @@ async function tryLoadWorldAirports(): Promise<AirportRow[]> {
     }
 }
 
-export async function seedAirportsFromJson(): Promise<AirportRow[]> {
+function readAirportsJson(): AirportRow[] {
     const file = path.join(process.cwd(), "data", "airports.json");
     const raw = fs.readFileSync(file, "utf8");
-    const rows: AirportRow[] = JSON.parse(raw);
+    return JSON.parse(raw);
+}
 
-    for (const a of rows) {
-        // Ensure iata is exactly 3 chars and icao is at most 4 chars
-        const iata = (a.iata || "").toUpperCase().slice(0, 3);
-        const icao = a.icao ? a.icao.toUpperCase().slice(0, 4) : "";
-        await prisma.airport.upsert({
-            where: { iata },
-            update: {
-                icao,
-                name: a.name ?? "",
-                city: a.city ?? "",
-                country: a.country ?? "",
-                lat: a.lat ?? null,
-                lon: a.lon ?? null,
-                timezone: a.timezone ?? "",
-            },
-            create: {
-                iata,
-                icao,
-                name: a.name ?? "",
-                city: a.city ?? "",
-                country: a.country ?? "",
-                lat: a.lat ?? null,
-                lon: a.lon ?? null,
-                timezone: a.timezone ?? "",
-            },
-        });
-    }
-    return rows;
+async function loadSource(): Promise<AirportRow[]> {
+    const p = path.join(process.cwd(), "data", "airports.json");
+    if (fs.existsSync(p)) return readAirportsJson();
+    return tryLoadWorldAirports();
 }
 
 function resolveTimezone(lat: number | null, lon: number | null, existingTz?: string | null): string | null {
-    try {
-        if (existingTz) return existingTz;
-        if (typeof lat === "number" && typeof lon === "number") {
-            return tzLookup(lat, lon);
+    const candidate = existingTz && isValidIanaTz(existingTz) ? existingTz : null;
+    if (candidate) return candidate;
+    if (typeof lat === "number" && typeof lon === "number") {
+        try {
+            const tz = tzLookup(lat, lon);
+            return isValidIanaTz(tz) ? tz : null;
+        } catch {
+            return null;
         }
-    } catch { }
+    }
     return null;
 }
 
-export async function runSeed(reset = false): Promise<number> {
-    if (reset) {
-        await prisma.airport.deleteMany({});
-    }
+function same(a: Partial<Airport>, b: Partial<Airport>): boolean {
+    return (
+        (a.icao ?? null) === (b.icao ?? null) &&
+        (a.name ?? null) === (b.name ?? null) &&
+        (a.city ?? null) === (b.city ?? null) &&
+        (a.country ?? null) === (b.country ?? null) &&
+        (a.lat ?? null) === (b.lat ?? null) &&
+        (a.lon ?? null) === (b.lon ?? null) &&
+        (a.timezone ?? null) === (b.timezone ?? null)
+    );
+}
 
-    let rows: AirportRow[] = await tryLoadWorldAirports();
-    if (!rows.length) rows = await seedAirportsFromJson();
+/**
+ * Chunkable seeding used by the API route.
+ * Returns { processed, total, nextOffset, done }.
+ */
+export async function seedChunk(offset: number, limit: number, { replace = false } = {}) {
+    let rows = await loadSource();
 
-    // Ensure iata is exactly 3 chars and icao is at most 4 chars
-    rows = rows.filter((r) => r.iata && r.iata.length === 3);
-    for (const r of rows) {
-        r.iata = r.iata.toUpperCase().slice(0, 3);
-        r.icao = r.icao ? r.icao.toUpperCase().slice(0, 4) : "";
-        r.timezone = resolveTimezone(r.lat, r.lon, r.tz);
-    }
-    rows = rows.filter((r) => r.timezone);
+    rows = rows
+        .map((r) => {
+            const iata = sanitizeIata(r.iata);
+            if (!iata) return null;
+            const icao = sanitizeIcao(r.icao);
+            const lat = typeof r.lat === "number" ? r.lat : null;
+            const lon = typeof r.lon === "number" ? r.lon : null;
+            const timezone = resolveTimezone(lat, lon, r.tz ?? r.timezone);
+            return timezone
+                ? {
+                    iata,
+                    icao,
+                    name: r.name?.trim() || null,
+                    city: r.city?.trim() || null,
+                    country: r.country?.trim() || null,
+                    lat,
+                    lon,
+                    timezone,
+                }
+                : null;
+        })
+        .filter(Boolean) as any[];
+
     rows = uniqueBy(rows, (r) => r.iata);
 
-    const chunkSize = 500;
-    for (let i = 0; i < rows.length; i += chunkSize) {
-        const chunk = rows.slice(i, i + chunkSize);
-        await prisma.$transaction(chunk.map((r) =>
-            prisma.airport.upsert({
-                where: { iata: r.iata },
-                create: {
-                    iata: r.iata,
-                    icao: r.icao ?? "",
-                    name: r.name ?? "",
-                    city: r.city ?? "",
-                    country: r.country ?? "",
-                    lat: r.lat,
-                    lon: r.lon,
-                    timezone: r.timezone ?? "",
-                },
-                update: {
-                    icao: r.icao ?? "",
-                    name: r.name ?? "",
-                    city: r.city ?? "",
-                    country: r.country ?? "",
-                    lat: r.lat,
-                    lon: r.lon,
-                    timezone: r.timezone ?? "",
-                },
-            })
-        ));
+    const total = rows.length;
+    const slice = rows.slice(offset, offset + limit);
+
+    if (replace && offset === 0) {
+        await prisma.auditLog.deleteMany();
+        await prisma.snapshot.deleteMany();
+        await prisma.airport.deleteMany();
     }
 
-    const count = await prisma.airport.count();
-    return count;
+    // First pass: createMany for speed
+    await prisma.airport.createMany({
+        data: slice.map((r) => ({
+            iata: r.iata,
+            icao: r.icao ?? null,
+            name: r.name ?? r.iata,
+            city: r.city ?? null,
+            country: r.country ?? null,
+            lat: r.lat ?? null,
+            lon: r.lon ?? null,
+            timezone: r.timezone ?? "",
+        })),
+        skipDuplicates: true,
+    });
+
+    // Change-aware updates (only when values differ)
+    const existing = await prisma.airport.findMany({
+        where: { iata: { in: slice.map((r) => r.iata) } },
+        select: { iata: true, icao: true, name: true, city: true, country: true, lat: true, lon: true, timezone: true },
+    });
+    const byIata = new Map(existing.map((e) => [e.iata, e]));
+
+    for (const r of slice) {
+        const curr = byIata.get(r.iata);
+        if (!curr) continue;
+        const next: Partial<Airport> = {
+            icao: r.icao ?? null,
+            name: r.name ?? r.iata,
+            city: r.city ?? null,
+            country: r.country ?? null,
+            lat: r.lat ?? null,
+            lon: r.lon ?? null,
+            timezone: r.timezone ?? undefined,
+        };
+        if (!same(curr, next)) {
+            await prisma.airport.update({
+                where: { iata: r.iata },
+                data: next,
+            });
+        }
+    }
+
+    const nextOffset = Math.min(offset + slice.length, total);
+    const done = nextOffset >= total;
+    return { processed: slice.length, total, nextOffset, done };
+}
+
+/** Script-style full seed (optional; not used by the API chunker) */
+export async function runSeed({ reset = false, chunkSize = 500 }: { reset?: boolean; chunkSize?: number } = {}) {
+    try {
+        let offset = 0;
+        let total = 0;
+        let done = false;
+        if (reset) {
+            await prisma.auditLog.deleteMany();
+            await prisma.snapshot.deleteMany();
+            await prisma.airport.deleteMany();
+        }
+        while (!done) {
+            const r = await seedChunk(offset, chunkSize, { replace: false });
+            offset = r.nextOffset;
+            total = r.total;
+            done = r.done;
+        }
+        return prisma.airport.count();
+    } finally {
+        await prisma.$disconnect();
+    }
 }

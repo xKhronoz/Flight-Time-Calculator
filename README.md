@@ -207,6 +207,13 @@ ADMIN_PASS=change-me
   curl -X POST -u admin:change-me https://<your-app>.vercel.app/api/reseed
   ```
 
+### Chunked reseed on Vercel
+
+- Use **/admin/ops** to run a chunked reseed (client will call `/api/reseed` repeatedly).
+- Endpoint: `POST /api/reseed?offset=<n>&limit=<n>&mode=upsert|replace`
+- Defaults: `limit=500`, `mode=upsert`. Increase/decrease `limit` if needed.
+- If your middleware requires Basic Auth for APIs, toggle “Send Basic Auth header” and enter `ADMIN_USER`/`ADMIN_PASS`.
+
 ---
 
 ## ✅ Troubleshooting
@@ -228,47 +235,6 @@ ADMIN_PASS=change-me
   ```
 
 ---
-
-## Deploying to Vercel
-
-### 1) Provision database
-
-- Use **Vercel Postgres** (recommended) or compatible Postgres.
-- Grab both URLs:
-  - `DATABASE_URL` (pooled)
-  - `DIRECT_URL` (direct, for migrations)
-
-### 2) Set environment variables (Vercel → Project → Settings → Environment Variables)
-
-```bash
-DATABASE_URL=...
-DIRECT_URL=...
-ADMIN_USER=admin
-ADMIN_PASS=change-me
-```
-
-### 3) Build settings
-
-- **Build Command**: `prisma generate && next build`
-- (Optional) If you want to run migrations during build:
-  `prisma generate && prisma migrate deploy && next build`
-- **Output Directory**: `.next`
-
-### 4) First deploy, then run migrations
-
-From your machine or CI (pointing to the production DB):
-
-```bash
-npx prisma migrate deploy
-```
-
-### 5) Seed the airports
-
-Call the admin-only endpoint with Basic Auth once:
-
-```bash
-POST /api/reseed
-```
 
 ## Docker & Compose
 
