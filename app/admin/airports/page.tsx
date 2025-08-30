@@ -71,7 +71,56 @@ export default function AirportsPage(
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      {/* ... */}
+      <h1 className="text-2xl font-semibold mb-4">Airport Database</h1>
+      <form method="get" className="mb-4">
+        <input
+          type="text"
+          name="q"
+          defaultValue={q}
+          placeholder="Search by IATA, ICAO, name, city, country, timezone..."
+          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2"
+        />
+      </form>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr>
+              <th className="border-b border-slate-700 px-3 py-2 text-slate-400">IATA</th>
+              <th className="border-b border-slate-700 px-3 py-2 text-slate-400">ICAO</th>
+              <th className="border-b border-slate-700 px-3 py-2 text-slate-400">Name</th>
+              <th className="border-b border-slate-700 px-3 py-2 text-slate-400">City</th>
+              <th className="border-b border-slate-700 px-3 py-2 text-slate-400">Country</th>
+              <th className="border-b border-slate-700 px-3 py-2 text-slate-400">Timezone</th>
+              <th className="border-b border-slate-700 px-3 py-2 text-slate-400">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.isArray(items) && items.length > 0 ? (
+              items.map((item) => (
+                <tr key={item.iata} className="hover:bg-slate-800">
+                  <td className="border-b border-slate-700 px-3 py-2 font-mono">{item.iata}</td>
+                  <td className="border-b border-slate-700 px-3 py-2 font-mono">{item.icao || "-"}</td>
+                  <td className="border-b border-slate-700 px-3 py-2">{item.name}</td>
+                  <td className="border-b border-slate-700 px-3 py-2">{item.city}</td>
+                  <td className="border-b border-slate-700 px-3 py-2">{item.country}</td>
+                  <td className="border-b border-slate-700 px-3 py-2 font-mono">{item.timezone || "-"}</td>
+                  <td className="border-b border-slate-700 px-3 py-2">
+                    <Link href={{ pathname: "/admin/airport-edit", query: { iata: item.iata } }} className="text-blue-500 hover:underline">
+                      Edit
+                    </Link>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={9} className="px-3 py-2 text-slate-400">
+                  No airports found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
       <div className="flex items-center gap-2 mt-4">
         <Link href={qs(Math.max(1, page - 1))} className="px-3 py-2 rounded-xl border border-slate-700 hover:bg-slate-800">
           Prev

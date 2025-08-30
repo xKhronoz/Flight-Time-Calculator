@@ -1,9 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use, useEffect } from 'react';
 
-export default function AirportEditPage() {
-  const [iata, setIata] = useState('');
+type tParams = Promise<{ iata: string }>;
+
+export default function AirportEditPage({ params }: { params: tParams }) {
+  const { iata }: { iata?: string } = use(params);
+  const iataValue = (iata ? iata : '').toUpperCase();
+  const [iataState, setIata] = useState(iataValue);
   const [airport, setAirport] = useState<any>(null);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
@@ -11,7 +15,7 @@ export default function AirportEditPage() {
   async function fetchAirport() {
     setError(''); setSuccess('');
     try {
-      const res = await fetch(`/api/airports/${iata.toUpperCase()}`);
+      const res = await fetch(`/api/airports/${iataState.toUpperCase()}`);
       if (!res.ok) throw new Error('Not found');
       let data;
       try {
@@ -30,7 +34,7 @@ export default function AirportEditPage() {
     if (!airport) return;
     setError(''); setSuccess('');
     try {
-      const res = await fetch(`/api/airports/${iata.toUpperCase()}`, {
+      const res = await fetch(`/api/airports/${iataState.toUpperCase()}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -54,12 +58,22 @@ export default function AirportEditPage() {
     }
   }
 
+  useEffect(() => {
+    setIata(iataValue);
+  }, [iataValue]);
+
+  useEffect(() => {
+    if (iata) fetchAirport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [iata]);
+
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-semibold mb-4">Airport Override Editor</h1>
+      <div className="mb-2 text-xs text-slate-400">Debug: iata param = "{String(iata)}"</div>
 
       <div className="flex gap-2 mb-4">
-        <input value={iata} onChange={(e) => setIata(e.target.value)} placeholder="Enter IATA code" className="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700"/>
+        <input value={iataState} onChange={(e) => setIata(e.target.value)} placeholder="Enter IATA code" className="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700"/>
         <button onClick={fetchAirport} className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600">Fetch</button>
       </div>
 
