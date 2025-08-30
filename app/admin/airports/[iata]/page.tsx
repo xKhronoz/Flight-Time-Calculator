@@ -157,9 +157,13 @@ export default function AirportDetail({ params }: { params: tParams }) {
   }
 
   function valueFor(field: string, obj: any): string {
-    const v = obj?.[field];
-    if (v === null || v === undefined) return '';
-    return String(v);
+    try {
+      const v = obj?.[field];
+      if (v === null || v === undefined) return '';
+      return String(v);
+    } catch (error) {
+      return '';
+    }
   }
 
   if (!airport) {

@@ -241,7 +241,7 @@ ADMIN_PASS=change-me
 Build and run locally with Postgres:
 
 ```bash
-docker compose up --build
+docker compose --profile dev up --build
 # App at http://localhost:3000
 ```
 

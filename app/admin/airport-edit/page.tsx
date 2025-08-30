@@ -13,10 +13,15 @@ export default function AirportEditPage() {
     try {
       const res = await fetch(`/api/airports/${iata.toUpperCase()}`);
       if (!res.ok) throw new Error('Not found');
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (e: any) {
+        throw new Error('Failed to parse response');
+      }
       setAirport(data);
     } catch (e: any) {
-      setError(e.message);
+      setError(e?.message || String(e));
       setAirport(null);
     }
   }
@@ -36,11 +41,16 @@ export default function AirportEditPage() {
         })
       });
       if (!res.ok) throw new Error('Failed to update');
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (e: any) {
+        throw new Error('Failed to parse response');
+      }
       setAirport(data);
       setSuccess('Saved successfully.');
     } catch (e: any) {
-      setError(e.message);
+      setError(e?.message || String(e));
     }
   }
 

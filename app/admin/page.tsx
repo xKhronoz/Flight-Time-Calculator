@@ -79,7 +79,7 @@ export default function AdminHome() {
       <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-3">
         <h2 className="font-medium">Airport Database — Quick Reseed</h2>
         <div className="flex gap-2">
-          <button onClick={() => callReseed(false)} className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600">
+          <button onClick={() => callReseed(false)} className="px-4 py-2 mr-2 rounded-xl bg-slate-700 hover:bg-slate-600">
             Reseed (upsert)
           </button>
           <button onClick={() => callReseed(true)} className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500">
@@ -117,7 +117,7 @@ export default function AdminHome() {
               className="rounded-lg bg-slate-800 border border-slate-700 px-3 py-2"
             >
               <option value="upsert">Upsert (non-destructive)</option>
-              <option value="replace">Replace (truncate then insert)</option>
+              <option value="replace">Replace (reset and truncate then insert)</option>
             </select>
           </label>
 
@@ -166,20 +166,24 @@ export default function AdminHome() {
         </div>
 
         <div className="text-xs max-h-64 overflow-auto bg-slate-900 border border-slate-800 rounded-xl p-3 font-mono whitespace-pre-wrap">
+          <div className="text-sm text-slate-400">Log</div>
           {log.join('\n')}
         </div>
       </div>
 
-      <div className="text-sm text-slate-400">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-4">
+        <h2 className="font-medium">Manage Airports</h2>
         <div className="mb-2 flex gap-4">
-          <a href="/admin/airports" className="underline hover:no-underline text-blue-400">
+          <a href="/admin/airports" className="mr-2 underline hover:no-underline text-blue-400">
             Airports List
           </a>
           <a href="/admin/airport-edit" className="underline hover:no-underline text-blue-400">
             Airport Edit
           </a>
         </div>
-        Tip: Use the Airports list to search, then click an IATA to edit details.
+        <div className="text-sm text-slate-400">
+          Tip: Use the Airports list to search, then click an IATA to edit details.
+        </div>
       </div>
     </div>
   );

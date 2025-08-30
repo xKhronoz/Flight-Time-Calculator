@@ -39,11 +39,20 @@ export async function GET(
     }),
   };
 
-  const logs = await prisma.auditLog.findMany({
-    where,
-    orderBy: { changedAt: "desc" },
-    take: 500,
-  });
-
-  return NextResponse.json(logs);
+  try {
+    const logs = await prisma.auditLog.findMany({
+      where,
+      orderBy: { changedAt: "desc" },
+      take: 500,
+    });
+    return NextResponse.json(logs);
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: "Failed to fetch audit logs",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
 }

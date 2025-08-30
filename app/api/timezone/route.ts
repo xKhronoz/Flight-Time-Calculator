@@ -7,9 +7,13 @@ export async function GET(req: NextRequest) {
   if (!iata || iata.length !== 3) {
     return NextResponse.json({ error: "Provide ?iata=AAA" }, { status: 400 });
   }
-  const airport = await prisma.airport.findUnique({ where: { iata } });
-  if (!airport || !airport.timezone) {
-    return NextResponse.json({ error: "IATA not found or missing timezone" }, { status: 404 });
+  try {
+    const airport = await prisma.airport.findUnique({ where: { iata } });
+    if (!airport || !airport.timezone) {
+      return NextResponse.json({ error: "IATA not found or missing timezone" }, { status: 404 });
+    }
+    return NextResponse.json({ iata, timezone: airport.timezone });
+  } catch (err) {
+    return NextResponse.json({ error: "Database error", details: String(err) }, { status: 500 });
   }
-  return NextResponse.json({ iata, timezone: airport.timezone });
 }

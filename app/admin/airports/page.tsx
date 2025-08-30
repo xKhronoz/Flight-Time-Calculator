@@ -44,12 +44,19 @@ export default function AirportsPage(
       }
     : {};
 
-  const [items, total] = use(
-    Promise.all([
-      prisma.airport.findMany({ where, take, skip, orderBy: { iata: "asc" } }),
-      prisma.airport.count({ where }),
-    ])
-  );
+  let items: any[] = [];
+  let total = 0;
+  let error: string | null = null;
+  try {
+    [items, total] = use(
+      Promise.all([
+        prisma.airport.findMany({ where, take, skip, orderBy: { iata: "asc" } }),
+        prisma.airport.count({ where }),
+      ])
+    );
+  } catch (e) {
+    error = e instanceof Error ? e.message : String(e);
+  }
 
   const pages = Math.max(1, Math.ceil(total / take));
 
@@ -57,6 +64,14 @@ export default function AirportsPage(
     pathname: "/admin/airports",
     query: q ? { q, page: p } : { page: p },
   });
+
+  if (error) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="text-red-500">Failed to load airports: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6">
