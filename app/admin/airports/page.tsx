@@ -44,28 +44,24 @@ export default function AirportsPage(
       }
     : {};
 
-  let items: any[] = [];
-  let total = 0;
-  let error: string | null = null;
-  try {
-    [items, total] = use(
-      Promise.all([
-        prisma.airport.findMany({ where, take, skip, orderBy: { iata: "asc" } }),
-        prisma.airport.count({ where }),
-      ])
-    );
-  } catch (e) {
-    error = e instanceof Error ? e.message : String(e);
-  }
+  const [items, total, error] = use(
+    Promise.all([
+      prisma.airport.findMany({ where, take, skip, orderBy: { iata: "asc" } }),
+      prisma.airport.count({ where }),
+    ])
+      .then(([items, total]) => [items, total, null])
+      .catch(e => [null, null, e instanceof Error ? e.message : String(e)])
+  );
 
-  const pages = Math.max(1, Math.ceil(total / take));
+  const safeTotal = typeof total === "number" && Number.isFinite(total) ? total : 0;
+  const pages = Math.max(1, Math.ceil(safeTotal / take));
 
   const qs = (p: number): UrlObject => ({
     pathname: "/admin/airports",
     query: q ? { q, page: p } : { page: p },
   });
 
-  if (error) {
+  if (typeof error === "string" && error) {
     return (
       <div className="max-w-6xl mx-auto p-6">
         <div className="text-red-500">Failed to load airports: {error}</div>

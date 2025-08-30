@@ -160,6 +160,7 @@ export default function AirportDetail({ params }: { params: tParams }) {
     try {
       const v = obj?.[field];
       if (v === null || v === undefined) return '';
+      if (typeof v === 'object') return '';
       return String(v);
     } catch (error) {
       return '';
@@ -216,37 +217,37 @@ export default function AirportDetail({ params }: { params: tParams }) {
       <form onSubmit={save} className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label className="block text-sm mb-1">IATA</label>
-          <input value={airport.iata} readOnly className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input value={valueFor('iata', airport)} readOnly className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">ICAO</label>
-          <input name="icao" defaultValue={airport.icao || ''} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="icao" defaultValue={valueFor('icao', airport)} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm mb-1">Name</label>
-          <input name="name" defaultValue={airport.name || ''} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="name" defaultValue={valueFor('name', airport)} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">City</label>
-          <input name="city" defaultValue={airport.city || ''} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="city" defaultValue={valueFor('city', airport)} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">Country</label>
-          <input name="country" defaultValue={airport.country || ''} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="country" defaultValue={valueFor('country', airport)} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">Timezone (IANA)</label>
-          <input name="timezone" placeholder="e.g. America/Los_Angeles" defaultValue={airport.timezone || ''}
+          <input name="timezone" placeholder="e.g. America/Los_Angeles" defaultValue={valueFor('timezone', airport)}
             className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">Latitude</label>
-          <input name="lat" type="number" step="0.000001" defaultValue={airport.lat ?? ''}
+          <input name="lat" type="number" step="0.000001" defaultValue={valueFor('lat', airport)}
             className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">Longitude</label>
-          <input name="lon" type="number" step="0.000001" defaultValue={airport.lon ?? ''}
+          <input name="lon" type="number" step="0.000001" defaultValue={valueFor('lon', airport)}
             className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
 
