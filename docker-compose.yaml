@@ -1,20 +1,40 @@
-version: "3.9"
 services:
   db:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: app
+      POSTGRES_DB: ${POSTGRES_DB:-app}
     ports:
       - "5432:5432"
     volumes:
-      - db:/var/lib/postgresql/data
+      - app-db:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 3s
       retries: 20
+    profiles: ["dev", "prod", "db"]
+
+  web-dev:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm install && npx prisma generate && npx prisma migrate dev --name dev_bootstrap && npm run dev"
+    volumes:
+      - .:/app
+      - /app/node_modules # to prevent overwriting node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://postgres:postgres@db:5432/app_dev?sslmode=disable
+      DIRECT_URL: postgres://postgres:postgres@db:5432/app_dev?sslmode=disable
+      ADMIN_USER: admin
+      ADMIN_PASS: change-me
+    ports:
+      - "3000:3000"
+    profiles: ["dev"]
 
   web:
     build: .
@@ -22,13 +42,20 @@ services:
       db:
         condition: service_healthy
     environment:
+      NODE_ENV: production
       DATABASE_URL: postgres://postgres:postgres@db:5432/app?sslmode=disable
       DIRECT_URL: postgres://postgres:postgres@db:5432/app?sslmode=disable
       ADMIN_USER: admin
       ADMIN_PASS: change-me
-      NODE_ENV: production
     ports:
       - "3000:3000"
+    profiles: ["prod"]
 
 volumes:
-  db:
+  app-db:
+    driver: local
+    name: flight_time_calculator_db
+    driver_opts:
+      type: none
+      device: ${PWD}/docker-data/postgres
+      o: bind
