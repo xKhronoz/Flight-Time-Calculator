@@ -179,7 +179,7 @@ export default function Page() {
         className="text-3xl md:text-4xl font-bold mb-2">
         Flight Time Calculator
       </motion.h1>
-      <p className="text-slate-300 mb-6">
+      <p className="dark:text-slate-300 mb-6">
         Enter each flight leg with IATA codes, dates, and local times. Time zones & DST are handled via IANA zones from the airport database.
       </p>
 
@@ -187,18 +187,18 @@ export default function Page() {
         {legs.map((leg, idx) => {
           const summary = results.legSummaries.find((l) => l.id === leg.id);
           return (
-            <div key={leg.id} className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+            <div key={leg.id} className="rounded-2xl border border-slate-800 dark:bg-slate-900/50 p-6">
               <div className="flex flex-wrap justify-evenly items-end gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-sm mb-1">From (IATA)</label>
                   <div className="relative">
-                    <input className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
+                    <input className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
                       placeholder="SIN"
                       value={leg.origin}
                       onChange={(e) => updateLeg(leg.id, { origin: e.target.value.toUpperCase(), originTz: undefined })} />
                     <div style={{ height: '1.25em' }}>
                       {leg.originTz && (
-                        <p className="text-xs text-slate-400 absolute left-0 mt-1">TZ: {leg.originTz}</p>
+                        <p className="text-xs dark:text-slate-400 absolute left-0 mt-1">TZ: {leg.originTz}</p>
                       )}
                     </div>
                   </div>
@@ -206,10 +206,10 @@ export default function Page() {
                 <div className="md:col-span-3">
                   <label className="block text-sm mb-1">Depart (local)</label>
                   <div className="grid grid-cols-2 gap-2">
-                    <input type="date" className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
+                    <input type="date" className="rounded-xl dark:dark:bg-slate-800 border border-slate-700 px-3 py-2"
                       value={leg.departDate}
                       onChange={(e) => updateLeg(leg.id, { departDate: e.target.value })} />
-                    <input type="time" className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
+                    <input type="time" className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
                       value={leg.departTime}
                       onChange={(e) => updateLeg(leg.id, { departTime: e.target.value })} />
                   </div>
@@ -220,13 +220,13 @@ export default function Page() {
                 <div className="md:col-span-2">
                   <label className="block text-sm mb-1">To (IATA)</label>
                   <div className="relative">
-                    <input className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
+                    <input className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
                       placeholder="SEA"
                       value={leg.destination}
                       onChange={(e) => updateLeg(leg.id, { destination: e.target.value.toUpperCase(), destinationTz: undefined })} />
                     <div style={{ height: '1.25em' }}>
                       {leg.destinationTz && (
-                        <p className="text-xs text-slate-400 absolute left-0 mt-1">TZ: {leg.destinationTz}</p>
+                        <p className="text-xs dark:text-slate-400 absolute left-0 mt-1">TZ: {leg.destinationTz}</p>
                       )}
                     </div>
                   </div>
@@ -234,10 +234,10 @@ export default function Page() {
                 <div className="md:col-span-3">
                   <label className="block text-sm mb-1">Arrive (local)</label>
                   <div className="grid grid-cols-2 gap-2">
-                    <input type="date" className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
+                    <input type="date" className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
                       value={leg.arriveDate}
                       onChange={(e) => updateLeg(leg.id, { arriveDate: e.target.value })} />
-                    <input type="time" className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
+                    <input type="time" className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
                       value={leg.arriveTime}
                       onChange={(e) => updateLeg(leg.id, { arriveTime: e.target.value })} />
                   </div>
@@ -247,18 +247,18 @@ export default function Page() {
                 </div>
 
                 {summary && (
-                  <div className="md:col-span-12 mt-2 text-sm text-slate-200 text-center">
+                  <div className="md:col-span-12 mt-2 text-sm dark:text-slate-200 text-center">
                     <div className="grid md:grid-cols-3 gap-3">
-                      <div className="bg-slate-950/50 rounded-xl p-3">
-                        <div className="text-slate-400">Departure</div>
+                      <div className="dark:bg-slate-950/50 rounded-xl p-3">
+                        <div className="dark:text-slate-400">Departure</div>
                         <div className="font-medium">{summary.origin} • {summary.departLocal}</div>
                       </div>
-                      <div className="bg-slate-950/50 rounded-xl p-3">
-                        <div className="text-slate-400">Arrival</div>
+                      <div className="dark:bg-slate-950/50 rounded-xl p-3">
+                        <div className="dark:text-slate-400">Arrival</div>
                         <div className="font-medium">{summary.destination} • {summary.arriveLocal}</div>
                       </div>
-                      <div className="bg-slate-950/50 rounded-xl p-3">
-                        <div className="text-slate-400">Flight time</div>
+                      <div className="dark:bg-slate-950/50 rounded-xl p-3">
+                        <div className="dark:text-slate-400">Flight time</div>
                         <div className="font-semibold">{formatHM(summary.duration)}</div>
                       </div>
                     </div>
@@ -266,8 +266,8 @@ export default function Page() {
                 )}
 
                 {idx < legs.length - 1 && (
-                  <div className="md:col-span-12 flex items-center gap-2 text-slate-300">
-                    <button onClick={() => autoChainDates(idx)} className="px-3 py-2 rounded-xl border border-slate-700 hover:bg-slate-800">
+                  <div className="md:col-span-12 flex items-center gap-2 dark:text-slate-300">
+                    <button onClick={() => autoChainDates(idx)} className="px-3 py-2 rounded-xl border border-slate-700 hover:bg-slate-300 hover:dark:bg-slate-800">
                       Set next leg depart ≈ +2h after this arrival
                     </button>
                     {summary && (<span className="text-xs opacity-80">Arrives: {summary.arriveLocal}</span>)}
@@ -275,9 +275,9 @@ export default function Page() {
                 )}
 
                 <div className="flex gap-2 ml-auto">
-                  <button onClick={() => addLegAfter(idx)} className="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600">Add Leg</button>
+                  <button onClick={() => addLegAfter(idx)} className="px-3 py-2 rounded-xl border bg-green-600 hover:bg-green-400">Add Leg</button>
                   {legs.length > 1 && (
-                    <button onClick={() => removeLeg(leg.id)} className="px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500">Remove</button>
+                    <button onClick={() => removeLeg(leg.id)} className="px-3 py-2 rounded-xl border bg-rose-600 hover:bg-rose-400">Remove</button>
                   )}
                 </div>
               </div>
@@ -287,7 +287,7 @@ export default function Page() {
       </div>
 
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="mt-6">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5">
+        <div className="rounded-2xl border border-slate-800 dark:bg-slate-900/50 p-5">
           <h2 className="text-xl font-semibold mb-3">Journey Summary</h2>
           {results.errors.length > 0 && (
             <div className="mb-3 text-sm">
@@ -317,23 +317,23 @@ export default function Page() {
               })}
             </div>
           )}
-          <div className="grid md:grid-cols-3 gap-3 text-slate-100">
-            <div className="bg-slate-950/50 rounded-xl p-4">
-              <div className="text-slate-400">Total flight time</div>
+          <div className="grid md:grid-cols-3 gap-3 dark:text-slate-100">
+            <div className="dark:bg-slate-950/50 rounded-xl p-4">
+              <div className="dark:text-slate-400">Total flight time</div>
               <div className="text-2xl font-bold">{formatHM(results.totalFlight)}</div>
             </div>
-            <div className="bg-slate-950/50 rounded-xl p-4">
-              <div className="text-slate-400">Total transit time</div>
+            <div className="dark:bg-slate-950/50 rounded-xl p-4">
+              <div className="dark:text-slate-400">Total transit time</div>
               <div className="text-2xl font-bold">{formatHM(results.totalTransit)}</div>
             </div>
-            <div className="bg-slate-950/50 rounded-xl p-4">
-              <div className="text-slate-400">Total journey time</div>
+            <div className="dark:bg-slate-950/50 rounded-xl p-4">
+              <div className="dark:text-slate-400">Total journey time</div>
               <div className="text-2xl font-bold">{formatHM(results.totalJourney)}</div>
             </div>
           </div>
 
           {results.transits.length > 0 && (
-            <div className="mt-4 text-sm text-slate-300">
+            <div className="mt-4 text-sm dark:text-slate-300">
               <div className="font-medium mb-2">Transits between legs</div>
               <ol className="list-decimal ml-6 space-y-1">
                 {results.transits.map((t, i) => (<li key={i}>Leg {i + 1} → Leg {i + 2}: {formatHM(t)}</li>))}
