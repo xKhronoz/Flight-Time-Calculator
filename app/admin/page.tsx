@@ -72,7 +72,7 @@ export default function AdminHome() {
   const pct = total ? Math.min(100, Math.floor((offset / total) * 100)) : 0;
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-10 space-y-6">
       <h1 className="text-2xl font-semibold">Admin</h1>
 
       {/* Quick one-shot reseed (legacy) */}
@@ -165,9 +165,11 @@ export default function AdminHome() {
           </div>
         </div>
 
-        <div className="text-xs max-h-64 overflow-auto bg-slate-900 border border-slate-800 rounded-xl p-3 font-mono whitespace-pre-wrap">
+        <div className="space-y-2">
           <div className="text-sm text-slate-400">Log</div>
-          {log.join('\n')}
+          <div className="text-xs max-h-64 overflow-auto bg-slate-900 border border-slate-800 rounded-xl p-3 font-mono whitespace-pre-wrap">
+            {log.join('\n')}
+          </div>
         </div>
       </div>
 
@@ -185,6 +187,6 @@ export default function AdminHome() {
           Tip: Use the Airports list to search, then click an IATA to edit details.
         </div>
       </div>
-    </div>
+    </div >
   );
 }

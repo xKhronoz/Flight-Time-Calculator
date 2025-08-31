@@ -191,11 +191,17 @@ export default function Page() {
               <div className="flex flex-wrap justify-evenly items-end gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-sm mb-1">From (IATA)</label>
-                  <input className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                    placeholder="SIN"
-                    value={leg.origin}
-                    onChange={(e) => updateLeg(leg.id, { origin: e.target.value.toUpperCase(), originTz: undefined })} />
-                  {leg.originTz && <p className="text-xs text-slate-400 mt-1">TZ: {leg.originTz}</p>}
+                  <div className="relative">
+                    <input className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
+                      placeholder="SIN"
+                      value={leg.origin}
+                      onChange={(e) => updateLeg(leg.id, { origin: e.target.value.toUpperCase(), originTz: undefined })} />
+                    <div style={{ height: '1.25em' }}>
+                      {leg.originTz && (
+                        <p className="text-xs text-slate-400 absolute left-0 mt-1">TZ: {leg.originTz}</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <div className="md:col-span-3">
                   <label className="block text-sm mb-1">Depart (local)</label>
@@ -207,14 +213,23 @@ export default function Page() {
                       value={leg.departTime}
                       onChange={(e) => updateLeg(leg.id, { departTime: e.target.value })} />
                   </div>
+                  <div style={{ minHeight: '1.25em', maxHeight: '1.25em' }}>
+                    {/* Reserved for future hints/messages */}
+                  </div>
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm mb-1">To (IATA)</label>
-                  <input className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                    placeholder="SEA"
-                    value={leg.destination}
-                    onChange={(e) => updateLeg(leg.id, { destination: e.target.value.toUpperCase(), destinationTz: undefined })} />
-                  {leg.destinationTz && <p className="text-xs text-slate-400 mt-1">TZ: {leg.destinationTz}</p>}
+                  <div className="relative">
+                    <input className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
+                      placeholder="SEA"
+                      value={leg.destination}
+                      onChange={(e) => updateLeg(leg.id, { destination: e.target.value.toUpperCase(), destinationTz: undefined })} />
+                    <div style={{ height: '1.25em' }}>
+                      {leg.destinationTz && (
+                        <p className="text-xs text-slate-400 absolute left-0 mt-1">TZ: {leg.destinationTz}</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <div className="md:col-span-3">
                   <label className="block text-sm mb-1">Arrive (local)</label>
@@ -226,10 +241,13 @@ export default function Page() {
                       value={leg.arriveTime}
                       onChange={(e) => updateLeg(leg.id, { arriveTime: e.target.value })} />
                   </div>
+                  <div style={{ minHeight: '1.25em', maxHeight: '1.25em' }}>
+                    {/* Reserved for future hints/messages */}
+                  </div>
                 </div>
 
                 {summary && (
-                  <div className="md:col-span-12 mt-2 text-sm text-slate-200">
+                  <div className="md:col-span-12 mt-2 text-sm text-slate-200 text-center">
                     <div className="grid md:grid-cols-3 gap-3">
                       <div className="bg-slate-950/50 rounded-xl p-3">
                         <div className="text-slate-400">Departure</div>
@@ -272,8 +290,31 @@ export default function Page() {
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5">
           <h2 className="text-xl font-semibold mb-3">Journey Summary</h2>
           {results.errors.length > 0 && (
-            <div className="mb-3 text-rose-300 text-sm">
-              {results.errors.map((e, i) => (<div key={i}>⚠️ {e}</div>))}
+            <div className="mb-3 text-sm">
+              {results.errors.map((e, i) => {
+                let type = 'unknown';
+                let color = 'text-gray-300';
+                let icon = <span className="text-gray-300">&#10067;</span>; // ❓
+                let text = e;
+                if (e.toLowerCase().startsWith('warning:')) {
+                  type = 'warning';
+                  color = 'text-yellow-400';
+                  icon = <span className="text-yellow-400">&#9888;</span>; // ⚠
+                  text = e.replace(/^warning:/i, '').trim();
+                } else if (e.toLowerCase().startsWith('error:')) {
+                  type = 'error';
+                  color = 'text-rose-400';
+                  icon = <span className="text-rose-400">&#10060;</span>; // ❌
+                  text = e.replace(/^error:/i, '').trim();
+                }
+                return (
+                  <div key={i} className={`flex items-center gap-2 ${color}`}>
+                    {icon}
+                    <span className="font-semibold capitalize">{type}:</span>
+                    <span>{text}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
           <div className="grid md:grid-cols-3 gap-3 text-slate-100">
