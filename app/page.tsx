@@ -165,7 +165,7 @@ export default function Page() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-10">
       <motion.h1 initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
         className="text-3xl md:text-4xl font-bold mb-2">
         Flight Time Calculator
@@ -178,62 +178,46 @@ export default function Page() {
         {legs.map((leg, idx) => {
           const summary = results.legSummaries.find((l) => l.id === leg.id);
           return (
-            <div key={leg.id} className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
-              <div className="grid md:grid-cols-12 gap-3 items-end">
+            <div key={leg.id} className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+              <div className="flex flex-wrap justify-evenly items-end gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-sm mb-1">From (IATA)</label>
                   <input className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                         placeholder="SIN"
-                         value={leg.origin}
-                         onChange={(e) => updateLeg(leg.id, { origin: e.target.value.toUpperCase(), originTz: undefined })} />
+                    placeholder="SIN"
+                    value={leg.origin}
+                    onChange={(e) => updateLeg(leg.id, { origin: e.target.value.toUpperCase(), originTz: undefined })} />
                   {leg.originTz && <p className="text-xs text-slate-400 mt-1">TZ: {leg.originTz}</p>}
                 </div>
                 <div className="md:col-span-3">
                   <label className="block text-sm mb-1">Depart (local)</label>
                   <div className="grid grid-cols-2 gap-2">
                     <input type="date" className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                           value={leg.departDate}
-                           onChange={(e) => updateLeg(leg.id, { departDate: e.target.value })} />
+                      value={leg.departDate}
+                      onChange={(e) => updateLeg(leg.id, { departDate: e.target.value })} />
                     <input type="time" className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                           value={leg.departTime}
-                           onChange={(e) => updateLeg(leg.id, { departTime: e.target.value })} />
+                      value={leg.departTime}
+                      onChange={(e) => updateLeg(leg.id, { departTime: e.target.value })} />
                   </div>
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm mb-1">To (IATA)</label>
                   <input className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                         placeholder="SEA"
-                         value={leg.destination}
-                         onChange={(e) => updateLeg(leg.id, { destination: e.target.value.toUpperCase(), destinationTz: undefined })} />
+                    placeholder="SEA"
+                    value={leg.destination}
+                    onChange={(e) => updateLeg(leg.id, { destination: e.target.value.toUpperCase(), destinationTz: undefined })} />
                   {leg.destinationTz && <p className="text-xs text-slate-400 mt-1">TZ: {leg.destinationTz}</p>}
                 </div>
                 <div className="md:col-span-3">
                   <label className="block text-sm mb-1">Arrive (local)</label>
                   <div className="grid grid-cols-2 gap-2">
                     <input type="date" className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                           value={leg.arriveDate}
-                           onChange={(e) => updateLeg(leg.id, { arriveDate: e.target.value })} />
+                      value={leg.arriveDate}
+                      onChange={(e) => updateLeg(leg.id, { arriveDate: e.target.value })} />
                     <input type="time" className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2"
-                           value={leg.arriveTime}
-                           onChange={(e) => updateLeg(leg.id, { arriveTime: e.target.value })} />
+                      value={leg.arriveTime}
+                      onChange={(e) => updateLeg(leg.id, { arriveTime: e.target.value })} />
                   </div>
                 </div>
-
-                <div className="md:col-span-2 flex gap-2 justify-end md:justify-start">
-                  <button onClick={() => addLegAfter(idx)} className="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600">Add leg</button>
-                  {legs.length > 1 && (
-                    <button onClick={() => removeLeg(leg.id)} className="px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500">Remove</button>
-                  )}
-                </div>
-
-                {idx < legs.length - 1 && (
-                  <div className="md:col-span-12 flex items-center gap-2 text-slate-300">
-                    <button onClick={() => autoChainDates(idx)} className="px-3 py-2 rounded-xl border border-slate-700 hover:bg-slate-800">
-                      Set next leg depart ≈ +2h after this arrival
-                    </button>
-                    {summary && (<span className="text-xs opacity-80">Arrives: {summary.arriveLocal}</span>)}
-                  </div>
-                )}
 
                 {summary && (
                   <div className="md:col-span-12 mt-2 text-sm text-slate-200">
@@ -253,6 +237,22 @@ export default function Page() {
                     </div>
                   </div>
                 )}
+
+                {idx < legs.length - 1 && (
+                  <div className="md:col-span-12 flex items-center gap-2 text-slate-300">
+                    <button onClick={() => autoChainDates(idx)} className="px-3 py-2 rounded-xl border border-slate-700 hover:bg-slate-800">
+                      Set next leg depart ≈ +2h after this arrival
+                    </button>
+                    {summary && (<span className="text-xs opacity-80">Arrives: {summary.arriveLocal}</span>)}
+                  </div>
+                )}
+
+                <div className="flex gap-2 ml-auto">
+                  <button onClick={() => addLegAfter(idx)} className="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600">Add Leg</button>
+                  {legs.length > 1 && (
+                    <button onClick={() => removeLeg(leg.id)} className="px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500">Remove</button>
+                  )}
+                </div>
               </div>
             </div>
           );
