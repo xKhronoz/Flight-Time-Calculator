@@ -26,11 +26,17 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Flight Time Calculator",
   description: "DST-aware, multi-leg flight time calculator",
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon-16x16.png',
+    apple: '/apple-touch-icon.png',
+  },
+  manifest: '/site.webmanifest',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="min-h-screen flex flex-col">
         <ThemeProvider
           attribute="class"
