@@ -188,63 +188,63 @@ export default function Page() {
           const summary = results.legSummaries.find((l) => l.id === leg.id);
           return (
             <div key={leg.id} className="rounded-2xl border border-slate-800 dark:bg-slate-900/50 p-6">
-              <div className="flex flex-wrap justify-evenly items-end gap-6">
-                <div className="md:col-span-2">
-                  <label className="block text-sm mb-1">From (IATA)</label>
-                  <div className="relative">
-                    <input className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
-                      placeholder="SIN"
-                      value={leg.origin}
-                      onChange={(e) => updateLeg(leg.id, { origin: e.target.value.toUpperCase(), originTz: undefined })} />
-                    <div style={{ height: '1.25em' }}>
-                      {leg.originTz && (
-                        <p className="text-xs dark:text-slate-400 absolute left-0 mt-1">TZ: {leg.originTz}</p>
-                      )}
+                <div className="flex flex-wrap gap-6 items-end justify-start md:justify-evenly">
+                  <div className="w-full md:w-[48%]">
+                    <label className="block text-sm mb-1">From (IATA)</label>
+                    <div className="relative">
+                      <input className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
+                        placeholder="SIN"
+                        value={leg.origin}
+                        onChange={(e) => updateLeg(leg.id, { origin: e.target.value.toUpperCase(), originTz: undefined })} />
+                      <div style={{ height: '1.25em' }}>
+                        {leg.originTz && (
+                          <p className="text-xs dark:text-slate-400 absolute left-0 mt-1">TZ: {leg.originTz}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="md:col-span-3">
-                  <label className="block text-sm mb-1">Depart (local)</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input type="date" className="rounded-xl dark:dark:bg-slate-800 border border-slate-700 px-3 py-2"
-                      value={leg.departDate}
-                      onChange={(e) => updateLeg(leg.id, { departDate: e.target.value })} />
-                    <input type="time" className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
-                      value={leg.departTime}
-                      onChange={(e) => updateLeg(leg.id, { departTime: e.target.value })} />
-                  </div>
-                  <div style={{ minHeight: '1.25em', maxHeight: '1.25em' }}>
-                    {/* Reserved for future hints/messages */}
-                  </div>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm mb-1">To (IATA)</label>
-                  <div className="relative">
-                    <input className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
-                      placeholder="SEA"
-                      value={leg.destination}
-                      onChange={(e) => updateLeg(leg.id, { destination: e.target.value.toUpperCase(), destinationTz: undefined })} />
-                    <div style={{ height: '1.25em' }}>
-                      {leg.destinationTz && (
-                        <p className="text-xs dark:text-slate-400 absolute left-0 mt-1">TZ: {leg.destinationTz}</p>
-                      )}
+                  <div className="w-full md:w-[48%]">
+                    <label className="block text-sm mb-1">Depart (local)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="date" className="rounded-xl dark:dark:bg-slate-800 border border-slate-700 px-3 py-2"
+                        value={leg.departDate}
+                        onChange={(e) => updateLeg(leg.id, { departDate: e.target.value })} />
+                      <input type="time" className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
+                        value={leg.departTime}
+                        onChange={(e) => updateLeg(leg.id, { departTime: e.target.value })} />
+                    </div>
+                    <div style={{ minHeight: '1.25em', maxHeight: '1.25em' }}>
+                      {/* Reserved for future hints/messages */}
                     </div>
                   </div>
-                </div>
-                <div className="md:col-span-3">
-                  <label className="block text-sm mb-1">Arrive (local)</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input type="date" className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
-                      value={leg.arriveDate}
-                      onChange={(e) => updateLeg(leg.id, { arriveDate: e.target.value })} />
-                    <input type="time" className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
-                      value={leg.arriveTime}
-                      onChange={(e) => updateLeg(leg.id, { arriveTime: e.target.value })} />
+                  <div className="w-full md:w-[48%] md:mt-6">
+                    <label className="block text-sm mb-1">To (IATA)</label>
+                    <div className="relative">
+                      <input className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
+                        placeholder="SEA"
+                        value={leg.destination}
+                        onChange={(e) => updateLeg(leg.id, { destination: e.target.value.toUpperCase(), destinationTz: undefined })} />
+                      <div style={{ height: '1.25em' }}>
+                        {leg.destinationTz && (
+                          <p className="text-xs dark:text-slate-400 absolute left-0 mt-1">TZ: {leg.destinationTz}</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ minHeight: '1.25em', maxHeight: '1.25em' }}>
-                    {/* Reserved for future hints/messages */}
+                  <div className="w-full md:w-[48%] md:mt-6">
+                    <label className="block text-sm mb-1">Arrive (local)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="date" className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
+                        value={leg.arriveDate}
+                        onChange={(e) => updateLeg(leg.id, { arriveDate: e.target.value })} />
+                      <input type="time" className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
+                        value={leg.arriveTime}
+                        onChange={(e) => updateLeg(leg.id, { arriveTime: e.target.value })} />
+                    </div>
+                    <div style={{ minHeight: '1.25em', maxHeight: '1.25em' }}>
+                      {/* Reserved for future hints/messages */}
+                    </div>
                   </div>
-                </div>
 
                 {summary && (
                   <div className="md:col-span-12 mt-2 text-sm dark:text-slate-200 text-center">
