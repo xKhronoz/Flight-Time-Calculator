@@ -95,6 +95,12 @@ export default function Page() {
       const originTz = leg.originTz || 'UTC';
       const destTz = leg.destinationTz || 'UTC';
       try {
+        if (originTz === 'UTC') {
+          errors.push(`Warning: Time zone for origin ${leg.origin} not found. Calculation may be wrong.`);
+        }
+        if (destTz === 'UTC') {
+          errors.push(`Warning: Time zone for destination ${leg.destination} not found. Calculation may be wrong.`);
+        }
         const departUTC = parseLocalToUTC(leg.departDate, leg.departTime, originTz);
         const arriveUTC = parseLocalToUTC(leg.arriveDate, leg.arriveTime, destTz);
 
@@ -102,6 +108,9 @@ export default function Page() {
         if (!arriveUTC.isValid) throw new Error(`Invalid arrival date/time for ${leg.destination}`);
 
         const duration = arriveUTC.diff(departUTC, ['hours', 'minutes', 'seconds']);
+        if (duration.as('minutes') < 0) {
+          errors.push(`Error: Arrival time for leg ${leg.origin} → ${leg.destination} is before departure.`);
+        }
         legSummaries.push({
           id: leg.id,
           origin: leg.origin.toUpperCase(),

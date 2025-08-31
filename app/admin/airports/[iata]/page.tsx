@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, use } from 'react';
 import Link from 'next/link';
 
 type Airport = {
@@ -33,8 +33,11 @@ type Snapshot = {
   changedAt: string;
 };
 
-export default function AirportDetail({ params }: { params: { iata: string } }) {
-  const iata = (params.iata || '').toUpperCase();
+type tParams = Promise<{ iataSlug: string }>;
+
+export default function AirportDetail({ params }: { params: tParams }) {
+  const { iataSlug }: { iataSlug: string } = use(params);
+  const iata = (iataSlug || '').toUpperCase();
   const [airport, setAirport] = useState<Airport | null>(null);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [snaps, setSnaps] = useState<Snapshot[]>([]);
@@ -48,6 +51,9 @@ export default function AirportDetail({ params }: { params: { iata: string } }) 
   const [fTo, setFTo] = useState<string>('');
 
   const fieldsInLogs = useMemo(() => Array.from(new Set(logs.map(l => l.field))).sort(), [logs]);
+  const [diffSnapId, setDiffSnapId] = useState<number | null>(null);
+  const [diffA, setDiffA] = useState<number | null>(null);
+  const [diffB, setDiffB] = useState<number | null>(null);
   const selectedSnapshot = useMemo(() => snaps.find(s => s.id === diffSnapId) || null, [snaps, diffSnapId]);
   const snapA = useMemo(() => snaps.find(s => s.id === diffA) || null, [snaps, diffA]);
   const snapB = useMemo(() => snaps.find(s => s.id === diffB) || null, [snaps, diffB]);
@@ -81,13 +87,13 @@ export default function AirportDetail({ params }: { params: { iata: string } }) 
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
     const payload: any = {};
-for (const [k, v] of formData.entries()) {
-  if (k === 'reason') continue; // we append after loop
-  if (v === '') continue;
-  if (k === 'lat' || k === 'lon') payload[k] = parseFloat(String(v));
-  else payload[k] = v;
-}
-payload.reason = String(formData.get('reason') || '').trim();
+    for (const [k, v] of formData.entries()) {
+      if (k === 'reason') continue; // we append after loop
+      if (v === '') continue;
+      if (k === 'lat' || k === 'lon') payload[k] = parseFloat(String(v));
+      else payload[k] = v;
+    }
+    payload.reason = String(formData.get('reason') || '').trim();
 
     try {
       const r = await fetch(`/api/airports/${iata}`, {
@@ -110,7 +116,7 @@ payload.reason = String(formData.get('reason') || '').trim();
   async function rollback(id: number) {
     setMsg('Rolling back field...');
     try {
-      const _reason = prompt('Reason for rollback?'); if(!_reason){ setMsg('Cancelled — reason required.'); return; }
+      const _reason = prompt('Reason for rollback?'); if (!_reason) { setMsg('Cancelled — reason required.'); return; }
       const r = await fetch(`/api/airports/${iata}/rollback?id=${id}&reason=${encodeURIComponent(_reason)}`, { method: 'POST' });
       const data = await r.json();
       if (!r.ok) throw new Error(data?.error || 'Rollback failed');
@@ -125,7 +131,7 @@ payload.reason = String(formData.get('reason') || '').trim();
     if (!rollbackAt) { setMsg('Pick a timestamp.'); return; }
     setMsg('Rolling back full record...');
     try {
-      const _reason = prompt('Reason for rollback-to?'); if(!_reason){ setMsg('Cancelled — reason required.'); return; }
+      const _reason = prompt('Reason for rollback-to?'); if (!_reason) { setMsg('Cancelled — reason required.'); return; }
       const r = await fetch(`/api/airports/${iata}/rollback-to?at=${encodeURIComponent(rollbackAt)}&reason=${encodeURIComponent(_reason)}`, { method: 'POST' });
       const data = await r.json();
       if (!r.ok) throw new Error(data?.error || 'Rollback-to failed');
@@ -139,7 +145,7 @@ payload.reason = String(formData.get('reason') || '').trim();
   async function restoreSnapshot(id: number) {
     setMsg('Restoring snapshot...');
     try {
-      const _reason = prompt('Reason for restoring snapshot?'); if(!_reason){ setMsg('Cancelled — reason required.'); return; }
+      const _reason = prompt('Reason for restoring snapshot?'); if (!_reason) { setMsg('Cancelled — reason required.'); return; }
       const r = await fetch(`/api/airports/${iata}/restore?id=${id}&reason=${encodeURIComponent(_reason)}`, { method: 'POST' });
       const data = await r.json();
       if (!r.ok) throw new Error(data?.error || 'Restore failed');
@@ -151,12 +157,17 @@ payload.reason = String(formData.get('reason') || '').trim();
   }
 
   function valueFor(field: string, obj: any): string {
-  const v = obj?.[field];
-  if (v === null || v === undefined) return '';
-  return String(v);
-}
+    try {
+      const v = obj?.[field];
+      if (v === null || v === undefined) return '';
+      if (typeof v === 'object') return '';
+      return String(v);
+    } catch (error) {
+      return '';
+    }
+  }
 
-if (!airport) {
+  if (!airport) {
     return (
       <div className="max-w-3xl mx-auto p-6">
         <Link href="/admin/airports" className="text-sm underline">← Back</Link>
@@ -164,6 +175,37 @@ if (!airport) {
       </div>
     );
   }
+
+  const [lastRestore, setLastRestore] = useState<{ field: string, prev: any } | null>(null);
+
+  async function restoreField(field: string, prev: any) {
+    setMsg('Restoring field...');
+    try {
+      const _reason = prompt(`Reason for restoring field "${field}"?`);
+      if (!_reason) {
+        setMsg('Cancelled — reason required.');
+        return;
+      }
+      const payload: any = { [field]: prev, reason: _reason };
+      const r = await fetch(`/api/airports/${iata}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data?.error || 'Restore failed');
+      setAirport(data);
+      setMsg('Field restored.');
+      setLastRestore({ field, prev });
+      await loadAudit();
+      const r3 = await fetch(`/api/airports/${iata}/snapshots?take=50`);
+      if (r3.ok) setSnaps(await r3.json());
+    } catch (e: any) {
+      setMsg(`Error: ${e.message}`);
+    }
+  }
+
+  const [jsonViewSnap, setJsonViewSnap] = useState<Snapshot | null>(null);
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8">
@@ -175,46 +217,46 @@ if (!airport) {
       <form onSubmit={save} className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label className="block text-sm mb-1">IATA</label>
-          <input value={airport.iata} readOnly className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input value={valueFor('iata', airport)} readOnly className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">ICAO</label>
-          <input name="icao" defaultValue={airport.icao || ''} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="icao" defaultValue={valueFor('icao', airport)} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm mb-1">Name</label>
-          <input name="name" defaultValue={airport.name || ''} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="name" defaultValue={valueFor('name', airport)} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">City</label>
-          <input name="city" defaultValue={airport.city || ''} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="city" defaultValue={valueFor('city', airport)} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">Country</label>
-          <input name="country" defaultValue={airport.country || ''} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="country" defaultValue={valueFor('country', airport)} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">Timezone (IANA)</label>
-          <input name="timezone" placeholder="e.g. America/Los_Angeles" defaultValue={airport.timezone || ''}
-                 className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="timezone" placeholder="e.g. America/Los_Angeles" defaultValue={valueFor('timezone', airport)}
+            className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">Latitude</label>
-          <input name="lat" type="number" step="0.000001" defaultValue={airport.lat ?? ''}
-                 className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="lat" type="number" step="0.000001" defaultValue={valueFor('lat', airport)}
+            className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">Longitude</label>
-          <input name="lon" type="number" step="0.000001" defaultValue={airport.lon ?? ''}
-                 className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="lon" type="number" step="0.000001" defaultValue={valueFor('lon', airport)}
+            className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
 
         <div className="md:col-span-2">
-  <label className="block text-sm mb-1">Reason (required)</label>
-  <input name="reason" required placeholder="Describe why you are changing this airport..." className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
-</div>
+          <label className="block text-sm mb-1">Reason (required)</label>
+          <input name="reason" required placeholder="Describe why you are changing this airport..." className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+        </div>
 
-<div className="md:col-span-2 flex items-center gap-2 mt-2">
+        <div className="md:col-span-2 flex items-center gap-2 mt-2">
           <button className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600">Save</button>
           {msg && <span className="text-sm text-slate-300">{msg}</span>}
           {lastRestore && (
@@ -288,7 +330,7 @@ if (!airport) {
           <div className="font-medium mb-2">Full-record rollback</div>
           <div className="flex flex-col md:flex-row gap-2 items-start md:items-center">
             <input type="datetime-local" value={rollbackAt} onChange={e => setRollbackAt(e.target.value)}
-                   className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+              className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
             <button onClick={rollbackToTimestamp} className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500">
               Roll back record to timestamp
             </button>
@@ -299,20 +341,20 @@ if (!airport) {
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-  <h2 className="text-xl font-semibold">Snapshots</h2>
-  <div className="flex items-center gap-2">
-    <div className="text-sm text-slate-400">Diff two snapshots:</div>
-    <select value={diffA ?? ''} onChange={(e) => setDiffA(e.target.value ? Number(e.target.value) : null)} className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-2">
-      <option value="">(A)</option>
-      {snaps.map(s => <option key={s.id} value={s.id}>#{s.id}</option>)}
-    </select>
-    <span className="text-slate-500">vs</span>
-    <select value={diffB ?? ''} onChange={(e) => setDiffB(e.target.value ? Number(e.target.value) : null)} className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-2">
-      <option value="">(B)</option>
-      {snaps.map(s => <option key={s.id} value={s.id}>#{s.id}</option>)}
-    </select>
-  </div>
-</div>
+          <h2 className="text-xl font-semibold">Snapshots</h2>
+          <div className="flex items-center gap-2">
+            <div className="text-sm text-slate-400">Diff two snapshots:</div>
+            <select value={diffA ?? ''} onChange={(e) => setDiffA(e.target.value ? Number(e.target.value) : null)} className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-2">
+              <option value="">(A)</option>
+              {snaps.map(s => <option key={s.id} value={s.id}>#{s.id}</option>)}
+            </select>
+            <span className="text-slate-500">vs</span>
+            <select value={diffB ?? ''} onChange={(e) => setDiffB(e.target.value ? Number(e.target.value) : null)} className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-2">
+              <option value="">(B)</option>
+              {snaps.map(s => <option key={s.id} value={s.id}>#{s.id}</option>)}
+            </select>
+          </div>
+        </div>
         <div className="overflow-auto border border-slate-800 rounded-xl">
           <table className="w-full text-sm">
             <thead className="bg-slate-900 sticky top-0">
@@ -338,35 +380,35 @@ if (!airport) {
           </table>
         </div>
         {selectedSnapshot && (
-  <div className="mt-4">
-    <div className="flex items-center justify-between mb-2">
-      <div className="font-medium">Diff vs current — Snapshot #{selectedSnapshot.id} ({new Date(selectedSnapshot.changedAt).toLocaleString()})</div>
-      <button onClick={() => setDiffSnapId(null)} className="text-sm px-2 py-1 rounded-lg border border-slate-700 hover:bg-slate-800">Close</button>
-    </div>
-    {/* Placeholder diff; detailed row diffs injected in earlier step if present */}
-  </div>
-)}
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-medium">Diff vs current — Snapshot #{selectedSnapshot.id} ({new Date(selectedSnapshot.changedAt).toLocaleString()})</div>
+              <button onClick={() => setDiffSnapId(null)} className="text-sm px-2 py-1 rounded-lg border border-slate-700 hover:bg-slate-800">Close</button>
+            </div>
+            {/* Placeholder diff; detailed row diffs injected in earlier step if present */}
+          </div>
+        )}
 
-{snapA && snapB && (
-  <div className="mt-4">
-    <div className="font-medium mb-2">Snapshot-to-snapshot diff — #{snapA.id} vs #{snapB.id}</div>
-    {/* Placeholder diff */}
-  </div>
-)}
+        {snapA && snapB && (
+          <div className="mt-4">
+            <div className="font-medium mb-2">Snapshot-to-snapshot diff — #{snapA.id} vs #{snapB.id}</div>
+            {/* Placeholder diff */}
+          </div>
+        )}
 
-<p className="text-xs text-slate-400">Snapshots are captured automatically after each change/rollback/restore.</p>
+        <p className="text-xs text-slate-400">Snapshots are captured automatically after each change/rollback/restore.</p>
 
-{jsonViewSnap && (
-  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-    <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full max-h-[80vh] overflow-auto p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className="font-medium">Snapshot #{jsonViewSnap.id} JSON — {new Date(jsonViewSnap.changedAt).toLocaleString()}</div>
-        <button onClick={() => setJsonViewSnap(null)} className="text-sm px-2 py-1 rounded-lg border border-slate-700 hover:bg-slate-800">Close</button>
-      </div>
-      <pre className="text-xs whitespace-pre-wrap break-words">{JSON.stringify(jsonViewSnap.data, null, 2)}</pre>
-    </div>
-  </div>
-)}
+        {jsonViewSnap && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full max-h-[80vh] overflow-auto p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-medium">Snapshot #{jsonViewSnap.id} JSON — {new Date(jsonViewSnap.changedAt).toLocaleString()}</div>
+                <button onClick={() => setJsonViewSnap(null)} className="text-sm px-2 py-1 rounded-lg border border-slate-700 hover:bg-slate-800">Close</button>
+              </div>
+              <pre className="text-xs whitespace-pre-wrap break-words">{JSON.stringify(jsonViewSnap.data, null, 2)}</pre>
+            </div>
+          </div>
+        )}
 
       </section>
     </div>
