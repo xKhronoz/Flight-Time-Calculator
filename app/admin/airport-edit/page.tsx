@@ -70,11 +70,11 @@ export default function AirportEditPage({ params }: { params: tParams }) {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-semibold mb-4">Airport Override Editor</h1>
-      <div className="mb-2 text-xs text-slate-400">Debug: iata param = "{String(iata)}"</div>
+      <div className="mb-2 text-xs dark:text-slate-400">Debug: iata param = "{String(iata)}"</div>
 
       <div className="flex gap-2 mb-4">
-        <input value={iataState} onChange={(e) => setIata(e.target.value)} placeholder="Enter IATA code" className="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700"/>
-        <button onClick={fetchAirport} className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600">Fetch</button>
+        <input value={iataState} onChange={(e) => setIata(e.target.value)} placeholder="Enter IATA code" className="px-3 py-2 rounded-xl dark:dark:bg-slate-800 border border-slate-700"/>
+        <button onClick={fetchAirport} className="px-4 py-2 rounded-xl border border-slate-700 bg-slate-400 dark:bg-slate-700 hover:bg-slate-600">Fetch</button>
       </div>
 
       {error && <div className="text-red-400 mb-2">{error}</div>}
@@ -85,22 +85,22 @@ export default function AirportEditPage({ params }: { params: tParams }) {
           <div>
             <label className="block text-sm">Name</label>
             <input value={airport.name || ''} onChange={(e) => setAirport({...airport, name: e.target.value})}
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700"/>
+              className="w-full px-3 py-2 rounded-xl dark:bg-slate-800 border border-slate-700"/>
           </div>
           <div>
             <label className="block text-sm">City</label>
             <input value={airport.city || ''} onChange={(e) => setAirport({...airport, city: e.target.value})}
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700"/>
+              className="w-full px-3 py-2 rounded-xl dark:bg-slate-800 border border-slate-700"/>
           </div>
           <div>
             <label className="block text-sm">Country</label>
             <input value={airport.country || ''} onChange={(e) => setAirport({...airport, country: e.target.value})}
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700"/>
+              className="w-full px-3 py-2 rounded-xl dark:bg-slate-800 border border-slate-700"/>
           </div>
           <div>
             <label className="block text-sm">Timezone</label>
             <input value={airport.timezone || ''} onChange={(e) => setAirport({...airport, timezone: e.target.value})}
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700"/>
+              className="w-full px-3 py-2 rounded-xl dark:bg-slate-800 border border-slate-700"/>
           </div>
           <button onClick={saveAirport} className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500">Save</button>
         </div>

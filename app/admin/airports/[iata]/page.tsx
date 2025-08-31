@@ -217,43 +217,43 @@ export default function AirportDetail({ params }: { params: tParams }) {
       <form onSubmit={save} className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label className="block text-sm mb-1">IATA</label>
-          <input value={valueFor('iata', airport)} readOnly className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input value={valueFor('iata', airport)} readOnly className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">ICAO</label>
-          <input name="icao" defaultValue={valueFor('icao', airport)} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="icao" defaultValue={valueFor('icao', airport)} className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm mb-1">Name</label>
-          <input name="name" defaultValue={valueFor('name', airport)} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="name" defaultValue={valueFor('name', airport)} className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">City</label>
-          <input name="city" defaultValue={valueFor('city', airport)} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="city" defaultValue={valueFor('city', airport)} className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">Country</label>
-          <input name="country" defaultValue={valueFor('country', airport)} className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="country" defaultValue={valueFor('country', airport)} className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">Timezone (IANA)</label>
           <input name="timezone" placeholder="e.g. America/Los_Angeles" defaultValue={valueFor('timezone', airport)}
-            className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+            className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">Latitude</label>
           <input name="lat" type="number" step="0.000001" defaultValue={valueFor('lat', airport)}
-            className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+            className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm mb-1">Longitude</label>
           <input name="lon" type="number" step="0.000001" defaultValue={valueFor('lon', airport)}
-            className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+            className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
 
         <div className="md:col-span-2">
           <label className="block text-sm mb-1">Reason (required)</label>
-          <input name="reason" required placeholder="Describe why you are changing this airport..." className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+          <input name="reason" required placeholder="Describe why you are changing this airport..." className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2" />
         </div>
 
         <div className="md:col-span-2 flex items-center gap-2 mt-2">
@@ -272,22 +272,22 @@ export default function AirportDetail({ params }: { params: tParams }) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
             <div>
               <label className="block text-xs mb-1">Field</label>
-              <select value={fField} onChange={e => setFField(e.target.value)} className="w-full rounded-lg bg-slate-800 border border-slate-700 px-2 py-2">
+              <select value={fField} onChange={e => setFField(e.target.value)} className="w-full rounded-lg dark:bg-slate-800 border border-slate-700 px-2 py-2">
                 <option value="">(any)</option>
                 {fieldsInLogs.map(f => <option key={f} value={f}>{f}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs mb-1">User contains</label>
-              <input value={fUser} onChange={e => setFUser(e.target.value)} className="w-full rounded-lg bg-slate-800 border border-slate-700 px-2 py-2" />
+              <input value={fUser} onChange={e => setFUser(e.target.value)} className="w-full rounded-lg dark:bg-slate-800 border border-slate-700 px-2 py-2" />
             </div>
             <div>
               <label className="block text-xs mb-1">From</label>
-              <input type="datetime-local" value={fFrom} onChange={e => setFFrom(e.target.value)} className="w-full rounded-lg bg-slate-800 border border-slate-700 px-2 py-2" />
+              <input type="datetime-local" value={fFrom} onChange={e => setFFrom(e.target.value)} className="w-full rounded-lg dark:bg-slate-800 border border-slate-700 px-2 py-2" />
             </div>
             <div>
               <label className="block text-xs mb-1">To</label>
-              <input type="datetime-local" value={fTo} onChange={e => setFTo(e.target.value)} className="w-full rounded-lg bg-slate-800 border border-slate-700 px-2 py-2" />
+              <input type="datetime-local" value={fTo} onChange={e => setFTo(e.target.value)} className="w-full rounded-lg dark:bg-slate-800 border border-slate-700 px-2 py-2" />
             </div>
           </div>
           <div className="mt-2">
@@ -330,7 +330,7 @@ export default function AirportDetail({ params }: { params: tParams }) {
           <div className="font-medium mb-2">Full-record rollback</div>
           <div className="flex flex-col md:flex-row gap-2 items-start md:items-center">
             <input type="datetime-local" value={rollbackAt} onChange={e => setRollbackAt(e.target.value)}
-              className="rounded-xl bg-slate-800 border border-slate-700 px-3 py-2" />
+              className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2" />
             <button onClick={rollbackToTimestamp} className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500">
               Roll back record to timestamp
             </button>
@@ -344,12 +344,12 @@ export default function AirportDetail({ params }: { params: tParams }) {
           <h2 className="text-xl font-semibold">Snapshots</h2>
           <div className="flex items-center gap-2">
             <div className="text-sm text-slate-400">Diff two snapshots:</div>
-            <select value={diffA ?? ''} onChange={(e) => setDiffA(e.target.value ? Number(e.target.value) : null)} className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-2">
+            <select value={diffA ?? ''} onChange={(e) => setDiffA(e.target.value ? Number(e.target.value) : null)} className="rounded-lg dark:bg-slate-800 border border-slate-700 px-2 py-2">
               <option value="">(A)</option>
               {snaps.map(s => <option key={s.id} value={s.id}>#{s.id}</option>)}
             </select>
             <span className="text-slate-500">vs</span>
-            <select value={diffB ?? ''} onChange={(e) => setDiffB(e.target.value ? Number(e.target.value) : null)} className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-2">
+            <select value={diffB ?? ''} onChange={(e) => setDiffB(e.target.value ? Number(e.target.value) : null)} className="rounded-lg dark:bg-slate-800 border border-slate-700 px-2 py-2">
               <option value="">(B)</option>
               {snaps.map(s => <option key={s.id} value={s.id}>#{s.id}</option>)}
             </select>

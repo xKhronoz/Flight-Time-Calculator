@@ -78,7 +78,7 @@ export default function AirportsPage(
           name="q"
           defaultValue={q}
           placeholder="Search by IATA, ICAO, name, city, country, timezone..."
-          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2"
+          className="w-full rounded-lg border border-slate-700 dark:bg-slate-800 px-4 py-2"
         />
       </form>
       <div className="overflow-x-auto">
@@ -97,7 +97,7 @@ export default function AirportsPage(
           <tbody>
             {Array.isArray(items) && items.length > 0 ? (
               items.map((item) => (
-                <tr key={item.iata} className="hover:bg-slate-800">
+                <tr key={item.iata} className="dark:hover:bg-slate-800 hover:bg-slate-400">
                   <td className="border-b border-slate-700 px-3 py-2 font-mono">{item.iata}</td>
                   <td className="border-b border-slate-700 px-3 py-2 font-mono">{item.icao || "-"}</td>
                   <td className="border-b border-slate-700 px-3 py-2">{item.name}</td>

@@ -1,11 +1,14 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
+// tailwind.config.ts
+import type { Config } from 'tailwindcss'
+import animatePlugin from 'tailwindcss-animate'
+
+export default {
   content: [
-    "./app/**/*.{js,ts,jsx,tsx}",
-    "./components/**/*.{js,ts,jsx,tsx}",
+    './app/**/*.{js,ts,jsx,tsx}',
+    './components/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {},
   },
-  plugins: [],
-};
+  plugins: [animatePlugin],
+} satisfies Config
