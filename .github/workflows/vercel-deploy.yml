@@ -1,4 +1,6 @@
 name: Migrate DB and Deploy to Vercel
+permissions:
+  contents: read
 
 on:
   push:
