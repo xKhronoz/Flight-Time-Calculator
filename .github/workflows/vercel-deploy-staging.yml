@@ -1,4 +1,6 @@
 name: Migrate DB and Deploy to Vercel (Staging/Preview)
+permissions:
+  contents: read
 
 on:
   push:
@@ -8,6 +10,10 @@ on:
 jobs:
   deploy-preview:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
     env:
       # Vercel project identifiers (set in repo Settings → Secrets and variables → Actions)
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
