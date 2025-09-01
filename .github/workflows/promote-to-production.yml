@@ -1,4 +1,6 @@
 name: Promote to Production (Manual)
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:
