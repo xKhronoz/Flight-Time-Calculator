@@ -317,5 +317,8 @@ This repo is configured to use **GitHub Environments** for production gating:
 
 ## 📜 License
 
-MIT (app code).
+MIT (app code). This project is based on the original Flight Time Calculator App created by
+**xKhronoz** (https://github.com/xKhronoz). Please give proper attribution to
+the original author in derivative works.
+
 Airport data from [OurAirports](https://ourairports.com/data/) (Public Domain / CC0).
