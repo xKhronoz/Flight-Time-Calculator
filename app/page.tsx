@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { DateTime, Duration } from 'luxon';
 import { motion } from 'framer-motion';
 
@@ -58,10 +58,15 @@ export default function Page() {
     arriveTime: '07:10',
   }]);
 
-  // Resolve timezones whenever IATA changes
+  // Debounce timezone API calls for origin/destination changes
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
-    (async () => {
-      await Promise.all(legs.map(async (leg) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    debounceTimeoutRef.current = setTimeout(() => {
+      legs.forEach(async (leg) => {
         if (leg.origin && !leg.originTz) {
           const tz = await fetchTimezone(leg.origin);
           if (tz) setLegs((prev) => prev.map((l) => l.id === leg.id ? { ...l, originTz: tz } : l));
@@ -70,8 +75,13 @@ export default function Page() {
           const tz = await fetchTimezone(leg.destination);
           if (tz) setLegs((prev) => prev.map((l) => l.id === leg.id ? { ...l, destinationTz: tz } : l));
         }
-      }));
-    })();
+      });
+    }, 400); // 400ms debounce
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [legs.map(l => l.origin).join(','), legs.map(l => l.destination).join(',')]);
 
