@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState, useRef } from 'react';
-import { DateTime, Duration } from 'luxon';
-import { motion } from 'framer-motion';
+import { useEffect, useMemo, useState, useRef } from "react";
+import IataInput from "@/components/IataInput";
+import { DateTime, Duration } from "luxon";
+import { motion } from "framer-motion";
 
 type Leg = {
   id: string;
@@ -23,7 +24,9 @@ function uid() {
 async function fetchTimezone(iata: string): Promise<string | undefined> {
   if (!iata || iata.length !== 3) return;
   try {
-    const r = await fetch(`/api/timezone?iata=${encodeURIComponent(iata.toUpperCase())}`);
+    const r = await fetch(
+      `/api/timezone?iata=${encodeURIComponent(iata.toUpperCase())}`
+    );
     if (!r.ok) return;
     const data = await r.json();
     return data.timezone as string | undefined;
@@ -33,33 +36,42 @@ async function fetchTimezone(iata: string): Promise<string | undefined> {
 }
 
 function parseLocalToUTC(dateISO: string, timeHM: string, tz: string) {
-  const [h, m] = timeHM.split(':').map(Number);
-  const dt = DateTime.fromISO(dateISO, { zone: tz }).set({ hour: h || 0, minute: m || 0, second: 0, millisecond: 0 });
+  const [h, m] = timeHM.split(":").map(Number);
+  const dt = DateTime.fromISO(dateISO, { zone: tz }).set({
+    hour: h || 0,
+    minute: m || 0,
+    second: 0,
+    millisecond: 0,
+  });
   return dt.toUTC();
 }
 
 function formatHM(duration: Duration) {
-  const totalMinutes = Math.round(duration.as('minutes'));
+  const totalMinutes = Math.round(duration.as("minutes"));
   const hours = Math.floor(totalMinutes / 60);
   const minutes = Math.abs(totalMinutes % 60);
   return `${hours}h ${minutes}m`;
 }
 
 export default function Page() {
-  const today = DateTime.now().toISODate() || '';
+  const today = DateTime.now().toISODate() || "";
 
-  const [legs, setLegs] = useState<Leg[]>([{
-    id: uid(),
-    origin: 'SIN',
-    destination: 'SEA',
-    departDate: today,
-    departTime: '09:00',
-    arriveDate: today,
-    arriveTime: '07:10',
-  }]);
+  const [legs, setLegs] = useState<Leg[]>([
+    {
+      id: uid(),
+      origin: "SIN",
+      destination: "SEA",
+      departDate: today,
+      departTime: "09:00",
+      arriveDate: today,
+      arriveTime: "07:10",
+    },
+  ]);
 
   // Debounce timezone API calls for origin/destination changes
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // (suggestion caching is handled inside the IataInput component)
 
   useEffect(() => {
     if (debounceTimeoutRef.current) {
@@ -69,11 +81,19 @@ export default function Page() {
       legs.forEach(async (leg) => {
         if (leg.origin && !leg.originTz) {
           const tz = await fetchTimezone(leg.origin);
-          if (tz) setLegs((prev) => prev.map((l) => l.id === leg.id ? { ...l, originTz: tz } : l));
+          if (tz)
+            setLegs((prev) =>
+              prev.map((l) => (l.id === leg.id ? { ...l, originTz: tz } : l))
+            );
         }
         if (leg.destination && !leg.destinationTz) {
           const tz = await fetchTimezone(leg.destination);
-          if (tz) setLegs((prev) => prev.map((l) => l.id === leg.id ? { ...l, destinationTz: tz } : l));
+          if (tz)
+            setLegs((prev) =>
+              prev.map((l) =>
+                l.id === leg.id ? { ...l, destinationTz: tz } : l
+              )
+            );
         }
       });
     }, 400); // 400ms debounce
@@ -83,7 +103,10 @@ export default function Page() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [legs.map(l => l.origin).join(','), legs.map(l => l.destination).join(',')]);
+  }, [
+    legs.map((l) => l.origin).join(","),
+    legs.map((l) => l.destination).join(","),
+  ]);
 
   const results = useMemo(() => {
     const legSummaries: {
@@ -102,24 +125,44 @@ export default function Page() {
     const errors: string[] = [];
 
     for (const leg of legs) {
-      const originTz = leg.originTz || 'UTC';
-      const destTz = leg.destinationTz || 'UTC';
+      const originTz = leg.originTz || "UTC";
+      const destTz = leg.destinationTz || "UTC";
       try {
-        if (originTz === 'UTC') {
-          errors.push(`Warning: Time zone for origin ${leg.origin} not found. Calculation may be wrong.`);
+        if (originTz === "UTC") {
+          errors.push(
+            `Warning: Time zone for origin ${leg.origin} not found. Calculation may be wrong.`
+          );
         }
-        if (destTz === 'UTC') {
-          errors.push(`Warning: Time zone for destination ${leg.destination} not found. Calculation may be wrong.`);
+        if (destTz === "UTC") {
+          errors.push(
+            `Warning: Time zone for destination ${leg.destination} not found. Calculation may be wrong.`
+          );
         }
-        const departUTC = parseLocalToUTC(leg.departDate, leg.departTime, originTz);
-        const arriveUTC = parseLocalToUTC(leg.arriveDate, leg.arriveTime, destTz);
+        const departUTC = parseLocalToUTC(
+          leg.departDate,
+          leg.departTime,
+          originTz
+        );
+        const arriveUTC = parseLocalToUTC(
+          leg.arriveDate,
+          leg.arriveTime,
+          destTz
+        );
 
-        if (!departUTC.isValid) throw new Error(`Invalid departure date/time for ${leg.origin}`);
-        if (!arriveUTC.isValid) throw new Error(`Invalid arrival date/time for ${leg.destination}`);
+        if (!departUTC.isValid)
+          throw new Error(`Invalid departure date/time for ${leg.origin}`);
+        if (!arriveUTC.isValid)
+          throw new Error(`Invalid arrival date/time for ${leg.destination}`);
 
-        const duration = arriveUTC.diff(departUTC, ['hours', 'minutes', 'seconds']);
-        if (duration.as('minutes') < 0) {
-          errors.push(`Error: Arrival time for leg ${leg.origin} → ${leg.destination} is before departure.`);
+        const duration = arriveUTC.diff(departUTC, [
+          "hours",
+          "minutes",
+          "seconds",
+        ]);
+        if (duration.as("minutes") < 0) {
+          errors.push(
+            `Error: Arrival time for leg ${leg.origin} → ${leg.destination} is before departure.`
+          );
         }
         legSummaries.push({
           id: leg.id,
@@ -127,8 +170,12 @@ export default function Page() {
           destination: leg.destination.toUpperCase(),
           originTz,
           destinationTz: destTz,
-          departLocal: DateTime.fromISO(`${leg.departDate}T${leg.departTime}`, { zone: originTz }).toFormat('ccc, dd LLL yyyy • HH:mm ZZZZ'),
-          arriveLocal: DateTime.fromISO(`${leg.arriveDate}T${leg.arriveTime}`, { zone: destTz }).toFormat('ccc, dd LLL yyyy • HH:mm ZZZZ'),
+          departLocal: DateTime.fromISO(`${leg.departDate}T${leg.departTime}`, {
+            zone: originTz,
+          }).toFormat("ccc, dd LLL yyyy • HH:mm ZZZZ"),
+          arriveLocal: DateTime.fromISO(`${leg.arriveDate}T${leg.arriveTime}`, {
+            zone: destTz,
+          }).toFormat("ccc, dd LLL yyyy • HH:mm ZZZZ"),
           departUTC,
           arriveUTC,
           duration,
@@ -140,27 +187,43 @@ export default function Page() {
 
     const transits: Duration[] = [];
     for (let i = 0; i < legSummaries.length - 1; i++) {
-      const gap = legSummaries[i + 1].departUTC.diff(legSummaries[i].arriveUTC, ['hours', 'minutes']);
+      const gap = legSummaries[i + 1].departUTC.diff(
+        legSummaries[i].arriveUTC,
+        ["hours", "minutes"]
+      );
       transits.push(gap);
     }
 
-    const totalFlight = legSummaries.reduce((acc, l) => acc.plus(l.duration), Duration.fromObject({ minutes: 0 }));
-    const totalTransit = transits.reduce((acc, d) => acc.plus(d), Duration.fromObject({ minutes: 0 }));
+    const totalFlight = legSummaries.reduce(
+      (acc, l) => acc.plus(l.duration),
+      Duration.fromObject({ minutes: 0 })
+    );
+    const totalTransit = transits.reduce(
+      (acc, d) => acc.plus(d),
+      Duration.fromObject({ minutes: 0 })
+    );
     const totalJourney = totalFlight.plus(totalTransit);
 
-    return { legSummaries, transits, totalFlight, totalTransit, totalJourney, errors };
+    return {
+      legSummaries,
+      transits,
+      totalFlight,
+      totalTransit,
+      totalJourney,
+      errors,
+    };
   }, [legs]);
 
   const addLegAfter = (index?: number) => {
     const now = DateTime.now();
     const newLeg: Leg = {
       id: uid(),
-      origin: '',
-      destination: '',
-      departDate: now.toISODate() || '',
-      departTime: '00:00',
-      arriveDate: now.toISODate() || '',
-      arriveTime: '00:00',
+      origin: "",
+      destination: "",
+      departDate: now.toISODate() || "",
+      departTime: "00:00",
+      arriveDate: now.toISODate() || "",
+      arriveTime: "00:00",
     };
     setLegs((prev) => {
       const arr = [...prev];
@@ -170,106 +233,173 @@ export default function Page() {
     });
   };
 
-  const removeLeg = (id: string) => setLegs((prev) => prev.filter((l) => l.id !== id));
-  const updateLeg = (id: string, patch: Partial<Leg>) => setLegs((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+  const removeLeg = (id: string) =>
+    setLegs((prev) => prev.filter((l) => l.id !== id));
+  const updateLeg = (id: string, patch: Partial<Leg>) =>
+    setLegs((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
 
   const autoChainDates = (index: number) => {
     if (index < 0 || index >= legs.length - 1) return;
     const curr = legs[index];
-    const arrTz = curr.destinationTz || 'UTC';
-    const arriveLocal = DateTime.fromISO(`${curr.arriveDate}T${curr.arriveTime}`, { zone: arrTz });
+    const arrTz = curr.destinationTz || "UTC";
+    const arriveLocal = DateTime.fromISO(
+      `${curr.arriveDate}T${curr.arriveTime}`,
+      { zone: arrTz }
+    );
     const nextDefault = arriveLocal.plus({ hours: 2 });
     const next = legs[index + 1];
-    updateLeg(next.id, { departDate: nextDefault.toISODate() || next.departDate, departTime: nextDefault.toFormat('HH:mm') });
+    updateLeg(next.id, {
+      departDate: nextDefault.toISODate() || next.departDate,
+      departTime: nextDefault.toFormat("HH:mm"),
+    });
   };
 
   return (
     <div className="max-w-7xl mx-auto p-10">
-      <motion.h1 initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
-        className="text-3xl md:text-4xl font-bold mb-2">
+      <motion.h1
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="text-3xl md:text-4xl font-bold mb-2"
+      >
         Flight Time Calculator
       </motion.h1>
       <p className="dark:text-slate-300 mb-6">
-        Enter each flight leg with IATA codes, dates, and local times. Time zones & DST are handled via IANA zones from the airport database.
+        Enter each flight leg with IATA codes, dates, and local times. Time
+        zones & DST are handled via IANA zones from the airport database.
       </p>
 
       <div className="space-y-4">
         {legs.map((leg, idx) => {
           const summary = results.legSummaries.find((l) => l.id === leg.id);
           return (
-            <div key={leg.id} className="rounded-2xl border border-slate-800 dark:bg-slate-900/50 p-6">
-                <div className="flex flex-wrap gap-6 items-end justify-start md:justify-evenly">
-                  <div className="w-full md:w-[48%]">
-                    <label className="block text-sm mb-1">From (IATA)</label>
-                    <div className="relative">
-                      <input className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
-                        placeholder="SIN"
-                        value={leg.origin}
-                        onChange={(e) => updateLeg(leg.id, { origin: e.target.value.toUpperCase(), originTz: undefined })} />
-                      <div style={{ height: '1.25em' }}>
-                        {leg.originTz && (
-                          <p className="text-xs dark:text-slate-400 absolute left-0 mt-1">TZ: {leg.originTz}</p>
-                        )}
-                      </div>
+            <div
+              key={leg.id}
+              className="rounded-2xl border border-slate-800 dark:bg-slate-900/50 p-6"
+            >
+              <div className="flex flex-wrap gap-6 items-end justify-start md:justify-evenly">
+                <div className="w-full md:w-[48%]">
+                  <label className="block text-sm mb-1">From (IATA)</label>
+                  <div className="relative">
+                    <IataInput
+                      placeholder="SIN"
+                      value={leg.origin}
+                      onChange={(v) =>
+                        updateLeg(leg.id, { origin: v, originTz: undefined })
+                      }
+                      onSelect={(airport) =>
+                        updateLeg(leg.id, {
+                          origin: airport.iata || "",
+                          originTz: airport.timezone || undefined,
+                        })
+                      }
+                    />
+                    <div style={{ height: "1.25em" }}>
+                      {leg.originTz && (
+                        <p className="text-xs dark:text-slate-400 absolute left-0 mt-1">
+                          TZ: {leg.originTz}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="w-full md:w-[48%]">
-                    <label className="block text-sm mb-1">Depart (local)</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <input type="date" className="rounded-xl dark:dark:bg-slate-800 border border-slate-700 px-3 py-2"
-                        value={leg.departDate}
-                        onChange={(e) => updateLeg(leg.id, { departDate: e.target.value })} />
-                      <input type="time" className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
-                        value={leg.departTime}
-                        onChange={(e) => updateLeg(leg.id, { departTime: e.target.value })} />
-                    </div>
-                    <div style={{ minHeight: '1.25em', maxHeight: '1.25em' }}>
-                      {/* Reserved for future hints/messages */}
+                </div>
+                <div className="w-full md:w-[48%]">
+                  <label className="block text-sm mb-1">Depart (local)</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="date"
+                      className="rounded-xl dark:dark:bg-slate-800 border border-slate-700 px-3 py-2"
+                      value={leg.departDate}
+                      onChange={(e) =>
+                        updateLeg(leg.id, { departDate: e.target.value })
+                      }
+                    />
+                    <input
+                      type="time"
+                      className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
+                      value={leg.departTime}
+                      onChange={(e) =>
+                        updateLeg(leg.id, { departTime: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div style={{ minHeight: "1.25em", maxHeight: "1.25em" }}>
+                    {/* Reserved for future hints/messages */}
+                  </div>
+                </div>
+                <div className="w-full md:w-[48%] md:mt-6">
+                  <label className="block text-sm mb-1">To (IATA)</label>
+                  <div className="relative">
+                    <IataInput
+                      placeholder="SEA"
+                      value={leg.destination}
+                      onChange={(v) =>
+                        updateLeg(leg.id, {
+                          destination: v,
+                          destinationTz: undefined,
+                        })
+                      }
+                      onSelect={(airport) =>
+                        updateLeg(leg.id, {
+                          destination: airport.iata || "",
+                          destinationTz: airport.timezone || undefined,
+                        })
+                      }
+                    />
+                    <div style={{ height: "1.25em" }}>
+                      {leg.destinationTz && (
+                        <p className="text-xs dark:text-slate-400 absolute left-0 mt-1">
+                          TZ: {leg.destinationTz}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="w-full md:w-[48%] md:mt-6">
-                    <label className="block text-sm mb-1">To (IATA)</label>
-                    <div className="relative">
-                      <input className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
-                        placeholder="SEA"
-                        value={leg.destination}
-                        onChange={(e) => updateLeg(leg.id, { destination: e.target.value.toUpperCase(), destinationTz: undefined })} />
-                      <div style={{ height: '1.25em' }}>
-                        {leg.destinationTz && (
-                          <p className="text-xs dark:text-slate-400 absolute left-0 mt-1">TZ: {leg.destinationTz}</p>
-                        )}
-                      </div>
-                    </div>
+                </div>
+                <div className="w-full md:w-[48%] md:mt-6">
+                  <label className="block text-sm mb-1">Arrive (local)</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="date"
+                      className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
+                      value={leg.arriveDate}
+                      onChange={(e) =>
+                        updateLeg(leg.id, { arriveDate: e.target.value })
+                      }
+                    />
+                    <input
+                      type="time"
+                      className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
+                      value={leg.arriveTime}
+                      onChange={(e) =>
+                        updateLeg(leg.id, { arriveTime: e.target.value })
+                      }
+                    />
                   </div>
-                  <div className="w-full md:w-[48%] md:mt-6">
-                    <label className="block text-sm mb-1">Arrive (local)</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <input type="date" className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
-                        value={leg.arriveDate}
-                        onChange={(e) => updateLeg(leg.id, { arriveDate: e.target.value })} />
-                      <input type="time" className="rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
-                        value={leg.arriveTime}
-                        onChange={(e) => updateLeg(leg.id, { arriveTime: e.target.value })} />
-                    </div>
-                    <div style={{ minHeight: '1.25em', maxHeight: '1.25em' }}>
-                      {/* Reserved for future hints/messages */}
-                    </div>
+                  <div style={{ minHeight: "1.25em", maxHeight: "1.25em" }}>
+                    {/* Reserved for future hints/messages */}
                   </div>
+                </div>
 
                 {summary && (
                   <div className="md:col-span-12 mt-2 text-sm dark:text-slate-200 text-center">
                     <div className="grid md:grid-cols-3 gap-3">
                       <div className="dark:bg-slate-950/50 rounded-xl p-3">
                         <div className="dark:text-slate-400">Departure</div>
-                        <div className="font-medium">{summary.origin} • {summary.departLocal}</div>
+                        <div className="font-medium">
+                          {summary.origin} • {summary.departLocal}
+                        </div>
                       </div>
                       <div className="dark:bg-slate-950/50 rounded-xl p-3">
                         <div className="dark:text-slate-400">Arrival</div>
-                        <div className="font-medium">{summary.destination} • {summary.arriveLocal}</div>
+                        <div className="font-medium">
+                          {summary.destination} • {summary.arriveLocal}
+                        </div>
                       </div>
                       <div className="dark:bg-slate-950/50 rounded-xl p-3">
                         <div className="dark:text-slate-400">Flight time</div>
-                        <div className="font-semibold">{formatHM(summary.duration)}</div>
+                        <div className="font-semibold">
+                          {formatHM(summary.duration)}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -277,17 +407,34 @@ export default function Page() {
 
                 {idx < legs.length - 1 && (
                   <div className="md:col-span-12 flex items-center gap-2 dark:text-slate-300">
-                    <button onClick={() => autoChainDates(idx)} className="px-3 py-2 rounded-xl border border-slate-700 hover:bg-slate-300 hover:dark:bg-slate-800">
+                    <button
+                      onClick={() => autoChainDates(idx)}
+                      className="px-3 py-2 rounded-xl border border-slate-700 hover:bg-slate-300 hover:dark:bg-slate-800"
+                    >
                       Set next leg depart ≈ +2h after this arrival
                     </button>
-                    {summary && (<span className="text-xs opacity-80">Arrives: {summary.arriveLocal}</span>)}
+                    {summary && (
+                      <span className="text-xs opacity-80">
+                        Arrives: {summary.arriveLocal}
+                      </span>
+                    )}
                   </div>
                 )}
 
                 <div className="flex gap-2 ml-auto">
-                  <button onClick={() => addLegAfter(idx)} className="px-3 py-2 rounded-xl border bg-green-600 hover:bg-green-400">Add Leg</button>
+                  <button
+                    onClick={() => addLegAfter(idx)}
+                    className="px-3 py-2 rounded-xl border bg-green-500 hover:bg-green-400"
+                  >
+                    Add Leg
+                  </button>
                   {legs.length > 1 && (
-                    <button onClick={() => removeLeg(leg.id)} className="px-3 py-2 rounded-xl border bg-rose-600 hover:bg-rose-400">Remove</button>
+                    <button
+                      onClick={() => removeLeg(leg.id)}
+                      className="px-3 py-2 rounded-xl border bg-rose-500 hover:bg-rose-400"
+                    >
+                      Remove
+                    </button>
                   )}
                 </div>
               </div>
@@ -296,26 +443,31 @@ export default function Page() {
         })}
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="mt-6">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="mt-6"
+      >
         <div className="rounded-2xl border border-slate-800 dark:bg-slate-900/50 p-5">
           <h2 className="text-xl font-semibold mb-3">Journey Summary</h2>
           {results.errors.length > 0 && (
             <div className="mb-3 text-sm">
               {results.errors.map((e, i) => {
-                let type = 'unknown';
-                let color = 'text-gray-300';
+                let type = "unknown";
+                let color = "text-gray-300";
                 let icon = <span className="text-gray-300">&#10067;</span>; // ❓
                 let text = e;
-                if (e.toLowerCase().startsWith('warning:')) {
-                  type = 'warning';
-                  color = 'text-yellow-400';
+                if (e.toLowerCase().startsWith("warning:")) {
+                  type = "warning";
+                  color = "text-yellow-400";
                   icon = <span className="text-yellow-400">&#9888;</span>; // ⚠
-                  text = e.replace(/^warning:/i, '').trim();
-                } else if (e.toLowerCase().startsWith('error:')) {
-                  type = 'error';
-                  color = 'text-rose-400';
+                  text = e.replace(/^warning:/i, "").trim();
+                } else if (e.toLowerCase().startsWith("error:")) {
+                  type = "error";
+                  color = "text-rose-400";
                   icon = <span className="text-rose-400">&#10060;</span>; // ❌
-                  text = e.replace(/^error:/i, '').trim();
+                  text = e.replace(/^error:/i, "").trim();
                 }
                 return (
                   <div key={i} className={`flex items-center gap-2 ${color}`}>
@@ -330,15 +482,21 @@ export default function Page() {
           <div className="grid md:grid-cols-3 gap-3 dark:text-slate-100">
             <div className="dark:bg-slate-950/50 rounded-xl p-4">
               <div className="dark:text-slate-400">Total flight time</div>
-              <div className="text-2xl font-bold">{formatHM(results.totalFlight)}</div>
+              <div className="text-2xl font-bold">
+                {formatHM(results.totalFlight)}
+              </div>
             </div>
             <div className="dark:bg-slate-950/50 rounded-xl p-4">
               <div className="dark:text-slate-400">Total transit time</div>
-              <div className="text-2xl font-bold">{formatHM(results.totalTransit)}</div>
+              <div className="text-2xl font-bold">
+                {formatHM(results.totalTransit)}
+              </div>
             </div>
             <div className="dark:bg-slate-950/50 rounded-xl p-4">
               <div className="dark:text-slate-400">Total journey time</div>
-              <div className="text-2xl font-bold">{formatHM(results.totalJourney)}</div>
+              <div className="text-2xl font-bold">
+                {formatHM(results.totalJourney)}
+              </div>
             </div>
           </div>
 
@@ -346,7 +504,11 @@ export default function Page() {
             <div className="mt-4 text-sm dark:text-slate-300">
               <div className="font-medium mb-2">Transits between legs</div>
               <ol className="list-decimal ml-6 space-y-1">
-                {results.transits.map((t, i) => (<li key={i}>Leg {i + 1} → Leg {i + 2}: {formatHM(t)}</li>))}
+                {results.transits.map((t, i) => (
+                  <li key={i}>
+                    Leg {i + 1} → Leg {i + 2}: {formatHM(t)}
+                  </li>
+                ))}
               </ol>
             </div>
           )}
