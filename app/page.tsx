@@ -426,7 +426,7 @@ export default function Page() {
                 <div className="flex gap-2 ml-auto">
                   <button
                     onClick={() => addLegAfter(idx)}
-                    className="px-3 py-2 rounded-xl border bg-green-500 hover:bg-green-400"
+                    className="px-3 py-2 rounded-xl border bg-green-600 hover:bg-green-500"
                   >
                     Add Leg
                   </button>
