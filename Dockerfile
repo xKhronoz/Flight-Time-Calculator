@@ -19,7 +19,7 @@ RUN npx prisma generate
 RUN npm run build
 
 FROM base AS runner
-RUN groupadd -r nextjs && useradd -r -g nextjs nextjs
+RUN addgroup -S nextjs && adduser -S -G nextjs nextjs
 USER nextjs
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
