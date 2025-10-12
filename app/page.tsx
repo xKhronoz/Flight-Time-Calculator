@@ -433,7 +433,7 @@ export default function Page() {
                   {legs.length > 1 && (
                     <button
                       onClick={() => removeLeg(leg.id)}
-                      className="px-3 py-2 rounded-xl border bg-rose-500 hover:bg-rose-400"
+                      className="px-3 py-2 rounded-xl border bg-rose-500 hover:bg-rose-600"
                     >
                       Remove
                     </button>
