@@ -30,27 +30,61 @@ export default function IataInput({
 }: Props) {
   const [query, setQuery] = useState(value || "");
   const [results, setResults] = useState<Airport[]>([]);
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [interacted, setInteracted] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number>(-1);
+
+  // Consolidated validation state using useReducer
+  type ValidationState = {
+    open: boolean;
+    interacted: boolean;
+    showError: boolean;
+    focused: boolean;
+  };
+  type ValidationAction =
+    | { type: "SET_OPEN"; value: boolean }
+    | { type: "SET_INTERACTED"; value: boolean }
+    | { type: "SET_SHOW_ERROR"; value: boolean }
+    | { type: "SET_FOCUSED"; value: boolean }
+    | { type: "RESET" };
+
+  function validationReducer(state: ValidationState, action: ValidationAction): ValidationState {
+    switch (action.type) {
+      case "SET_OPEN":
+        return { ...state, open: action.value };
+      case "SET_INTERACTED":
+        return { ...state, interacted: action.value };
+      case "SET_SHOW_ERROR":
+        return { ...state, showError: action.value };
+      case "SET_FOCUSED":
+        return { ...state, focused: action.value };
+      case "RESET":
+        return { open: false, interacted: false, showError: false, focused: false };
+      default:
+        return state;
+    }
+  }
+
+  const [validationState, dispatchValidation] = React.useReducer(validationReducer, {
+    open: false,
+    interacted: false,
+    showError: false,
+    focused: false,
+  });
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cache = useRef(new Map<string, Airport[]>());
   const id = useId();
   const errorId = `${id}-iata-error`;
-  const [showError, setShowError] = useState(false);
-  const [focused, setFocused] = useState(false);
 
   useEffect(() => {
     // trigger a tiny delay so opacity transition runs on mount when error appears
-    if (forceInvalid && interacted) {
-      const t = setTimeout(() => setShowError(true), 10);
+    if (forceInvalid && validationState.interacted) {
+      const t = setTimeout(() => dispatchValidation({ type: "SET_SHOW_ERROR", value: true }), 10);
       return () => clearTimeout(t);
     }
-    setShowError(false);
-  }, [forceInvalid, interacted]);
+    dispatchValidation({ type: "SET_SHOW_ERROR", value: false });
+  }, [forceInvalid, validationState.interacted]);
 
   useEffect(() => setQuery(value || ""), [value]);
 
