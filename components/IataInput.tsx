@@ -222,7 +222,6 @@ export default function IataInput({
         setLoading(false);
       }
     }, DEBOUNCE_MS);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   useEffect(() => {
