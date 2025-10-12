@@ -3,6 +3,9 @@
 import React, { useEffect, useRef, useState, useId } from "react";
 import Spinner from "@/components/Spinner";
 
+// Debounce delay for querying the API (milliseconds). Named so it's easy to tune.
+const DEBOUNCE_MS = 350;
+
 type Airport = {
   iata: string;
   name?: string;
@@ -33,7 +36,13 @@ export default function IataInput({
   const [loading, setLoading] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number>(-1);
 
-  // Consolidated validation state using useReducer
+  // Consolidated validation state for the input's UX (open/interaction/focus/error)
+  // Keep these in a small reducer so state transitions stay explicit and
+  // grouped together. The fields mean:
+  // - open: whether the suggestions dropdown is visible
+  // - interacted: whether the user has focused or typed into the control
+  // - showError: whether to render the validation hint (fades in after interaction)
+  // - focused: whether the input currently has focus
   type ValidationState = {
     open: boolean;
     interacted: boolean;
@@ -47,7 +56,10 @@ export default function IataInput({
     | { type: "SET_FOCUSED"; value: boolean }
     | { type: "RESET" };
 
-  function validationReducer(state: ValidationState, action: ValidationAction): ValidationState {
+  function validationReducer(
+    state: ValidationState,
+    action: ValidationAction
+  ): ValidationState {
     switch (action.type) {
       case "SET_OPEN":
         return { ...state, open: action.value };
@@ -58,18 +70,41 @@ export default function IataInput({
       case "SET_FOCUSED":
         return { ...state, focused: action.value };
       case "RESET":
-        return { open: false, interacted: false, showError: false, focused: false };
+        return {
+          open: false,
+          interacted: false,
+          showError: false,
+          focused: false,
+        };
       default:
         return state;
     }
   }
 
-  const [validationState, dispatchValidation] = React.useReducer(validationReducer, {
-    open: false,
-    interacted: false,
-    showError: false,
-    focused: false,
-  });
+  const [validationState, dispatchValidation] = React.useReducer(
+    validationReducer,
+    {
+      open: false,
+      interacted: false,
+      showError: false,
+      focused: false,
+    }
+  );
+
+  // Convenience accessors to keep the rest of the component code readable.
+  const { open, interacted, showError, focused } = validationState;
+  function setOpen(v: boolean) {
+    dispatchValidation({ type: "SET_OPEN", value: v });
+  }
+  function setInteracted(v: boolean) {
+    dispatchValidation({ type: "SET_INTERACTED", value: v });
+  }
+  function setShowError(v: boolean) {
+    dispatchValidation({ type: "SET_SHOW_ERROR", value: v });
+  }
+  function setFocused(v: boolean) {
+    dispatchValidation({ type: "SET_FOCUSED", value: v });
+  }
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -80,7 +115,10 @@ export default function IataInput({
   useEffect(() => {
     // trigger a tiny delay so opacity transition runs on mount when error appears
     if (forceInvalid && validationState.interacted) {
-      const t = setTimeout(() => dispatchValidation({ type: "SET_SHOW_ERROR", value: true }), 10);
+      const t = setTimeout(
+        () => dispatchValidation({ type: "SET_SHOW_ERROR", value: true }),
+        10
+      );
       return () => clearTimeout(t);
     }
     dispatchValidation({ type: "SET_SHOW_ERROR", value: false });
@@ -183,7 +221,7 @@ export default function IataInput({
       } finally {
         setLoading(false);
       }
-    }, 350);
+    }, DEBOUNCE_MS);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
