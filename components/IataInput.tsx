@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useId } from "react";
 import Spinner from "@/components/Spinner";
 
 type Airport = {
@@ -16,6 +16,7 @@ type Props = {
   onChange: (v: string) => void;
   onSelect?: (airport: Airport) => void;
   placeholder?: string;
+  forceInvalid?: boolean;
   take?: number;
 };
 
@@ -24,6 +25,7 @@ export default function IataInput({
   onChange,
   onSelect,
   placeholder,
+  forceInvalid = false,
   take = 8,
 }: Props) {
   const [query, setQuery] = useState(value || "");
@@ -36,6 +38,19 @@ export default function IataInput({
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cache = useRef(new Map<string, Airport[]>());
+  const id = useId();
+  const errorId = `${id}-iata-error`;
+  const [showError, setShowError] = useState(false);
+  const [focused, setFocused] = useState(false);
+
+  useEffect(() => {
+    // trigger a tiny delay so opacity transition runs on mount when error appears
+    if (forceInvalid && interacted) {
+      const t = setTimeout(() => setShowError(true), 10);
+      return () => clearTimeout(t);
+    }
+    setShowError(false);
+  }, [forceInvalid, interacted]);
 
   useEffect(() => setQuery(value || ""), [value]);
 
@@ -86,7 +101,9 @@ export default function IataInput({
         // For short queries (<=3 chars) also fetch IATA-specific matches and merge them
         if (q.length <= 3) {
           try {
-            const iR = await fetch(`/api/airports/iata?q=${encodeURIComponent(q)}&take=${take}`);
+            const iR = await fetch(
+              `/api/airports/iata?q=${encodeURIComponent(q)}&take=${take}`
+            );
             if (iR.ok) {
               const iData = (await iR.json()) as Airport[];
               // prepend iata matches that aren't already present
@@ -101,14 +118,22 @@ export default function IataInput({
 
         if (q.length === 3) {
           try {
-            const exactR = await fetch(`/api/airports/${encodeURIComponent(q.toUpperCase())}`);
+            const exactR = await fetch(
+              `/api/airports/${encodeURIComponent(q.toUpperCase())}`
+            );
             if (exactR.ok) {
-              const exact = (await exactR.json()) as Airport | { error?: string };
+              const exact = (await exactR.json()) as
+                | Airport
+                | { error?: string };
               if ((exact as Airport).iata) {
                 const ex = exact as Airport;
                 const exists = data.find((d) => d.iata === ex.iata);
                 if (!exists) data = [ex, ...data];
-                else data = [exists, ...data.filter((d) => d.iata !== exists.iata)];
+                else
+                  data = [
+                    exists,
+                    ...data.filter((d) => d.iata !== exists.iata),
+                  ];
               }
             }
           } catch (err) {
@@ -198,9 +223,19 @@ export default function IataInput({
     <div className="relative" ref={containerRef}>
       <div className="relative">
         <input
-          className="w-full rounded-xl dark:bg-slate-800 border border-slate-700 px-3 py-2"
+          className={`w-full rounded-xl dark:bg-slate-800 px-3 py-2 ${
+            forceInvalid ? "border border-rose-500" : "border border-slate-700"
+          }`}
           placeholder={placeholder}
           value={query}
+          aria-invalid={
+            (forceInvalid || (focused && query.trim() === "")) && interacted
+          }
+          aria-describedby={
+            (forceInvalid || (focused && query.trim() === "")) && interacted
+              ? errorId
+              : undefined
+          }
           onChange={(e) => {
             const v = e.target.value.toUpperCase();
             setQuery(v);
@@ -209,11 +244,14 @@ export default function IataInput({
             setInteracted(true);
           }}
           onFocus={() => {
+            setFocused(true);
             if (results.length) setOpen(true);
             setInteracted(true);
           }}
+          onBlur={() => setFocused(false)}
           onKeyDown={onKeyDown}
         />
+
         <div
           style={{
             position: "absolute",
@@ -224,7 +262,37 @@ export default function IataInput({
         >
           {loading && <Spinner className="h-4 w-4" />}
         </div>
+
+        {/* validation hint with fade-in animation and small icon (absolutely positioned to avoid layout shift) */}
+        <p
+          id={errorId}
+          role="alert"
+          aria-live="polite"
+          className={`absolute left-0 top-full mt-1 z-20 text-xs text-rose-500 flex items-center gap-2 transition-opacity duration-200 ease-out ${
+            showError ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-rose-500"
+            aria-hidden="true"
+          >
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <span>IATA code required</span>
+        </p>
       </div>
+
       {open && results.length > 0 && (
         <ul className="absolute z-30 mt-1 w-full bg-white dark:bg-slate-800 border border-slate-700 rounded-xl shadow-lg max-h-72 overflow-auto">
           {results.map((r, i) => (

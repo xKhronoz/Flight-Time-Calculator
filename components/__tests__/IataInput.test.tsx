@@ -75,4 +75,31 @@ describe("IataInput", () => {
     fireEvent.keyDown(input, { key: "Enter" });
     expect(onSelect).toHaveBeenCalled();
   });
+
+  it("shows validation hint when forced invalid after interaction", async () => {
+    const onChange = vi.fn();
+    render(
+      <IataInput value="" onChange={onChange} placeholder="IATA" forceInvalid />
+    );
+    const input = screen.getByPlaceholderText("IATA") as HTMLInputElement;
+    // error should not be visible immediately
+    expect(screen.queryByText(/IATA code required/)).not.toBeInTheDocument();
+    // interact
+    await userEvent.click(input);
+    await userEvent.type(input, "S");
+    // validation hint should appear
+    await waitFor(() =>
+      expect(screen.getByText(/IATA code required/)).toBeInTheDocument()
+    );
+  });
+
+  it("shows validation hint when focused and empty", async () => {
+    const onChange = vi.fn();
+    render(<IataInput value="" onChange={onChange} placeholder="IATA" />);
+    const input = screen.getByPlaceholderText("IATA") as HTMLInputElement;
+    // focus the empty input
+    await userEvent.click(input);
+    // hint should appear because focus + empty triggers validation
+    await waitFor(() => expect(screen.getByText(/IATA code required/)).toBeInTheDocument());
+  });
 });

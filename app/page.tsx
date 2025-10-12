@@ -287,6 +287,7 @@ export default function Page() {
                       onChange={(v) =>
                         updateLeg(leg.id, { origin: v, originTz: undefined })
                       }
+                      forceInvalid={leg.origin.trim() === ""}
                       onSelect={(airport) =>
                         updateLeg(leg.id, {
                           origin: airport.iata || "",
@@ -339,6 +340,7 @@ export default function Page() {
                           destinationTz: undefined,
                         })
                       }
+                      forceInvalid={leg.destination.trim() === ""}
                       onSelect={(airport) =>
                         updateLeg(leg.id, {
                           destination: airport.iata || "",
