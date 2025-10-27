@@ -1,0 +1,930 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Flight Time Calculator API",
+    "version": "1.0.0",
+    "description": "Auto-generated OpenAPI schema (draft). Covers airports, audit logs, snapshots, timezone, health, and reseed endpoints."
+  },
+  "servers": [
+    {
+      "url": "https://flight-time-calculator.xkhronoz.dev",
+      "description": "Primary server (use hostname:port for local dev)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    },
+    "schemas": {
+      "Airport": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "iata": { "type": "string", "maxLength": 3 },
+          "icao": { "type": "string", "nullable": true },
+          "name": { "type": "string" },
+          "city": { "type": "string", "nullable": true },
+          "country": { "type": "string", "nullable": true },
+          "timezone": { "type": "string" },
+          "lat": { "type": "number", "format": "float", "nullable": true },
+          "lon": { "type": "number", "format": "float", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": [
+          "id",
+          "iata",
+          "name",
+          "timezone",
+          "createdAt",
+          "updatedAt"
+        ],
+        "example": {
+          "id": 123,
+          "iata": "LAX",
+          "icao": "KLAX",
+          "name": "Los Angeles International Airport",
+          "city": "Los Angeles",
+          "country": "United States",
+          "timezone": "America/Los_Angeles",
+          "lat": 33.9416,
+          "lon": -118.4085,
+          "createdAt": "2025-01-01T12:00:00Z",
+          "updatedAt": "2025-01-02T12:00:00Z"
+        }
+      },
+      "AuditLog": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "iata": { "type": "string" },
+          "field": { "type": "string" },
+          "oldValue": { "type": "string", "nullable": true },
+          "newValue": { "type": "string", "nullable": true },
+          "changedBy": { "type": "string", "nullable": true },
+          "reason": { "type": "string", "nullable": true },
+          "changedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "iata", "field", "changedAt"],
+        "example": {
+          "id": 1,
+          "iata": "LAX",
+          "field": "name",
+          "oldValue": "Old Name",
+          "newValue": "New Name",
+          "changedBy": "admin",
+          "reason": "fix typo",
+          "changedAt": "2025-01-02T12:00:00Z"
+        }
+      },
+      "Snapshot": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "iata": { "type": "string" },
+          "data": { "type": "object" },
+          "changedBy": { "type": "string", "nullable": true },
+          "reason": { "type": "string", "nullable": true },
+          "changedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "iata", "data", "changedAt"],
+        "example": {
+          "id": 42,
+          "iata": "LAX",
+          "data": {
+            "name": "Old Name",
+            "city": "Los Angeles",
+            "timezone": "America/Los_Angeles"
+          },
+          "changedBy": "admin",
+          "reason": "pre-migration snapshot",
+          "changedAt": "2025-01-02T12:00:00Z"
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" },
+          "details": { "type": "string", "nullable": true }
+        },
+        "required": ["error"]
+      },
+      "ReseedResponse": {
+        "type": "object",
+        "properties": {
+          "mode": { "type": "string" },
+          "processed": { "type": "integer" },
+          "total": { "type": "integer" },
+          "nextOffset": { "type": "integer", "nullable": true },
+          "done": { "type": "boolean" }
+        }
+      }
+    },
+    "examples": {
+      "AirportExample": {
+        "value": {
+          "id": 123,
+          "iata": "LAX",
+          "icao": "KLAX",
+          "name": "Los Angeles International Airport",
+          "city": "Los Angeles",
+          "country": "United States",
+          "timezone": "America/Los_Angeles",
+          "lat": 33.9416,
+          "lon": -118.4085,
+          "createdAt": "2025-01-01T12:00:00Z",
+          "updatedAt": "2025-01-02T12:00:00Z"
+        }
+      },
+      "AirportsArrayExample": {
+        "value": [
+          {
+            "id": 123,
+            "iata": "LAX",
+            "icao": "KLAX",
+            "name": "Los Angeles International Airport",
+            "city": "Los Angeles",
+            "country": "United States",
+            "timezone": "America/Los_Angeles",
+            "lat": 33.9416,
+            "lon": -118.4085,
+            "createdAt": "2025-01-01T12:00:00Z",
+            "updatedAt": "2025-01-02T12:00:00Z"
+          }
+        ]
+      },
+      "AuditLogExample": {
+        "value": {
+          "id": 1,
+          "iata": "LAX",
+          "field": "name",
+          "oldValue": "Old Name",
+          "newValue": "New Name",
+          "changedBy": "admin",
+          "reason": "fix typo",
+          "changedAt": "2025-01-02T12:00:00Z"
+        }
+      },
+      "AuditLogsArrayExample": {
+        "value": [
+          {
+            "id": 1,
+            "iata": "LAX",
+            "field": "name",
+            "oldValue": "Old Name",
+            "newValue": "New Name",
+            "changedBy": "admin",
+            "reason": "fix typo",
+            "changedAt": "2025-01-02T12:00:00Z"
+          }
+        ]
+      },
+      "SnapshotExample": {
+        "value": {
+          "id": 42,
+          "iata": "LAX",
+          "data": {
+            "name": "Old Name",
+            "city": "Los Angeles",
+            "timezone": "America/Los_Angeles"
+          },
+          "changedBy": "admin",
+          "reason": "pre-migration snapshot",
+          "changedAt": "2025-01-02T12:00:00Z"
+        }
+      },
+      "SnapshotsArrayExample": {
+        "value": [
+          {
+            "id": 42,
+            "iata": "LAX",
+            "data": {
+              "name": "Old Name",
+              "city": "Los Angeles",
+              "timezone": "America/Los_Angeles"
+            },
+            "changedBy": "admin",
+            "reason": "pre-migration snapshot",
+            "changedAt": "2025-01-02T12:00:00Z"
+          }
+        ]
+      },
+      "ErrorResponseExample": {
+        "value": { "error": "Not found", "details": "Airport LAX not found" }
+      },
+      "ReseedExample": {
+        "value": {
+          "mode": "upsert",
+          "processed": 500,
+          "total": 10000,
+          "nextOffset": 500,
+          "done": false
+        }
+      },
+      "TimezoneExample": {
+        "value": { "iata": "LAX", "timezone": "America/Los_Angeles" }
+      },
+      "PatchRequestExample": {
+        "value": {
+          "name": "Los Angeles Intl Airport",
+          "reason": "correct name"
+        }
+      },
+      "RestoreResultExample": {
+        "value": {
+          "ok": true,
+          "updated": {
+            "id": 123,
+            "iata": "LAX",
+            "icao": "KLAX",
+            "name": "Los Angeles International Airport",
+            "city": "Los Angeles",
+            "country": "United States",
+            "timezone": "America/Los_Angeles",
+            "lat": 33.9416,
+            "lon": -118.4085,
+            "createdAt": "2025-01-01T12:00:00Z",
+            "updatedAt": "2025-01-02T12:00:00Z"
+          },
+          "snapshotId": 42
+        }
+      },
+      "RollbackResultExample": {
+        "value": {
+          "ok": true,
+          "updated": {
+            "id": 123,
+            "iata": "LAX",
+            "icao": "KLAX",
+            "name": "Los Angeles International Airport",
+            "city": "Los Angeles",
+            "country": "United States",
+            "timezone": "America/Los_Angeles",
+            "lat": 33.9416,
+            "lon": -118.4085,
+            "createdAt": "2025-01-01T12:00:00Z",
+            "updatedAt": "2025-01-02T12:00:00Z"
+          }
+        }
+      },
+      "RollbackToResultExample": {
+        "value": {
+          "ok": true,
+          "at": "2025-01-02T12:00:00Z",
+          "updated": {
+            "id": 123,
+            "iata": "LAX",
+            "icao": "KLAX",
+            "name": "Los Angeles International Airport",
+            "city": "Los Angeles",
+            "country": "United States",
+            "timezone": "America/Los_Angeles",
+            "lat": 33.9416,
+            "lon": -118.4085,
+            "createdAt": "2025-01-01T12:00:00Z",
+            "updatedAt": "2025-01-02T12:00:00Z"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Liveness and optional DB status",
+            "content": {
+              "application/json": { "schema": { "type": "object" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/timezone": {
+      "get": {
+        "summary": "Get timezone for an IATA code",
+        "parameters": [
+          {
+            "name": "iata",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "maxLength": 3 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Timezone found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "iata": { "type": "string" },
+                    "timezone": { "type": "string" }
+                  },
+                  "required": ["iata", "timezone"]
+                },
+                "examples": {
+                  "default": { "$ref": "#/components/examples/TimezoneExample" }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/airports": {
+      "get": {
+        "summary": "Search airports (q) or list recent",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of airports",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Airport" }
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/AirportsArrayExample"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/airports/iata": {
+      "get": {
+        "summary": "Autocomplete IATA startsWith",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of airports matching prefix",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Airport" }
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/AirportsArrayExample"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/airports/{iata}": {
+      "parameters": [
+        {
+          "name": "iata",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string", "maxLength": 3 }
+        }
+      ],
+      "get": {
+        "summary": "Get airport by IATA",
+        "responses": {
+          "200": {
+            "description": "Airport object",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Airport" },
+                "examples": {
+                  "default": { "$ref": "#/components/examples/AirportExample" }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid IATA",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update airport (admin) - requires a `reason` either in JSON body or query param",
+        "security": [{ "basicAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "city": { "type": "string" },
+                  "country": { "type": "string" },
+                  "timezone": { "type": "string" },
+                  "icao": { "type": "string" },
+                  "lat": { "type": "number", "format": "float" },
+                  "lon": { "type": "number", "format": "float" },
+                  "reason": { "type": "string" }
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/PatchRequestExample"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated airport",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Airport" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/airports/{iata}/audit": {
+      "get": {
+        "summary": "Get audit logs for an airport",
+        "parameters": [
+          {
+            "name": "iata",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "field",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "user",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date-time" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of audit logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/AuditLog" }
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/AuditLogsArrayExample"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/airports/{iata}/snapshots": {
+      "get": {
+        "summary": "List snapshots for an airport",
+        "parameters": [
+          {
+            "name": "iata",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 50 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of snapshots",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Snapshot" }
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/SnapshotsArrayExample"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/airports/{iata}/restore": {
+      "post": {
+        "summary": "Restore an airport from a snapshot (admin)",
+        "security": [{ "basicAuth": [] }],
+        "parameters": [
+          {
+            "name": "iata",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "reason": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Restore result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "updated": { "$ref": "#/components/schemas/Airport" },
+                    "snapshotId": { "type": "integer" }
+                  }
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/RestoreResultExample"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/airports/{iata}/rollback": {
+      "post": {
+        "summary": "Rollback a single audit log entry (admin)",
+        "security": [{ "basicAuth": [] }],
+        "parameters": [
+          {
+            "name": "iata",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "reason": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rollback result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "updated": { "$ref": "#/components/schemas/Airport" }
+                  }
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/RollbackResultExample"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/airports/{iata}/rollback-to": {
+      "post": {
+        "summary": "Rollback airport to a specific timestamp (admin)",
+        "security": [{ "basicAuth": [] }],
+        "parameters": [
+          {
+            "name": "iata",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "reason": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rollback-to result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "at": { "type": "string" },
+                    "updated": { "$ref": "#/components/schemas/Airport" }
+                  }
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/RollbackToResultExample"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reseed": {
+      "post": {
+        "summary": "Seed or reseed airport data in chunks",
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 0 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 500 }
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["upsert", "replace"],
+              "default": "upsert"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reseed chunk result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ReseedResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
