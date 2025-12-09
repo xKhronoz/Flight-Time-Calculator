@@ -138,7 +138,8 @@ export default function RootLayout({
                   operatingSystem: "Any",
                   offers: {
                     "@type": "Offer",
-                    price: "0"
+                    price: "0",
+                    priceCurrency: "USD"
                   }
                 },
               ],
