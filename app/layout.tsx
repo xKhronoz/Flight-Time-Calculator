@@ -119,12 +119,12 @@ export default function RootLayout({
                   "@type": "WebSite",
                   "@id": `${SITE_URL}/#website`,
                   url: `${SITE_URL}/`,
-                  name: "Flight Time Calculator",
-                  description: "DST-aware, multi-leg flight time calculator"
+                  name: SITE_TITLE,
+                  description: SITE_DESCRIPTION
                 },
                 {
                   "@type": "Organization",
-                  name: "Flight Time Calculator",
+                  name: SITE_TITLE,
                   url: `${SITE_URL}/`,
                 },
               ],
