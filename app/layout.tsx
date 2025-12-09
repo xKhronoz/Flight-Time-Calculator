@@ -120,7 +120,7 @@ export default function RootLayout({
                   "@id": `${SITE_URL}/#website`,
                   url: `${SITE_URL}/`,
                   name: SITE_TITLE,
-                  description: SITE_DESCRIPTION
+                  description: SITE_DESCRIPTION,
                 },
                 {
                   "@type": "Organization",
