@@ -8,15 +8,21 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 // Read canonical site URL from environment (set in .env as NEXT_PUBLIC_SITE_URL)
-const SITE_URL =
+// Normalize by removing any trailing slashes so downstream usages can append
+// a single '/' where needed (e.g. canonical links).
+const SITE_URL_RAW =
   process.env.NEXT_PUBLIC_SITE_URL ||
   "https://flight-time-calculator.xkhronoz.dev";
+const SITE_URL = SITE_URL_RAW.replace(/\/+$/, "");
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
 });
+
+export const SITE_TITLE = "Flight Time Calculator";
+export const SITE_DESCRIPTION = "DST-aware, multi-leg flight time calculator";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -29,8 +35,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Flight Time Calculator",
-  description: "DST-aware, multi-leg flight time calculator",
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
   keywords: [
     "flight time",
     "flight duration",
@@ -50,16 +56,16 @@ export const metadata: Metadata = {
     canonical: `${SITE_URL}/`,
   },
   openGraph: {
-    title: "Flight Time Calculator",
-    description: "DST-aware, multi-leg flight time calculator",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     url: `${SITE_URL}/`,
-    siteName: "Flight Time Calculator",
+    siteName: SITE_TITLE,
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Flight Time Calculator",
+        alt: SITE_TITLE,
       },
     ],
     locale: "en_US",
@@ -67,8 +73,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Flight Time Calculator",
-    description: "DST-aware, multi-leg flight time calculator",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     images: ["/og-image.png"],
   },
   robots: {
@@ -114,12 +120,7 @@ export default function RootLayout({
                   "@id": `${SITE_URL}/#website`,
                   url: `${SITE_URL}/`,
                   name: "Flight Time Calculator",
-                  description: "DST-aware, multi-leg flight time calculator",
-                  potentialAction: {
-                    "@type": "SearchAction",
-                    target: `${SITE_URL}/?q={search_term_string}`,
-                    "query-input": "required name=search_term_string",
-                  },
+                  description: "DST-aware, multi-leg flight time calculator"
                 },
                 {
                   "@type": "Organization",
