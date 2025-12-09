@@ -51,7 +51,15 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   manifest: "/site.webmanifest",
-  metadataBase: new URL(SITE_URL),
+  metadataBase: (() => {
+    try {
+      return new URL(SITE_URL);
+    } catch (error) {
+      throw new Error(
+        `Invalid NEXT_PUBLIC_SITE_URL: ${SITE_URL}. Please provide a valid URL with protocol (e.g., https://example.com)`
+      );
+    }
+  })(),
   alternates: {
     canonical: `${SITE_URL}/`,
   },
