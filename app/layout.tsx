@@ -7,6 +7,11 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
+// Read canonical site URL from environment (set in .env as NEXT_PUBLIC_SITE_URL)
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  "https://flight-time-calculator.xkhronoz.dev";
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -26,12 +31,57 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Flight Time Calculator",
   description: "DST-aware, multi-leg flight time calculator",
+  keywords: [
+    "flight time",
+    "flight duration",
+    "aviation",
+    "IATA",
+    "timezone",
+    "flight planning",
+  ],
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon-16x16.png",
     apple: "/apple-touch-icon.png",
   },
   manifest: "/site.webmanifest",
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: `${SITE_URL}/`,
+  },
+  openGraph: {
+    title: "Flight Time Calculator",
+    description: "DST-aware, multi-leg flight time calculator",
+    url: `${SITE_URL}/`,
+    siteName: "Flight Time Calculator",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Flight Time Calculator",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Flight Time Calculator",
+    description: "DST-aware, multi-leg flight time calculator",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({
@@ -52,6 +102,34 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <Footer />
         </ThemeProvider>
+        {/* JSON-LD structured data for better indexing */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "WebSite",
+                  "@id": `${SITE_URL}/#website`,
+                  url: `${SITE_URL}/`,
+                  name: "Flight Time Calculator",
+                  description: "DST-aware, multi-leg flight time calculator",
+                  potentialAction: {
+                    "@type": "SearchAction",
+                    target: `${SITE_URL}/?q={search_term_string}`,
+                    "query-input": "required name=search_term_string",
+                  },
+                },
+                {
+                  "@type": "Organization",
+                  name: "Flight Time Calculator",
+                  url: `${SITE_URL}/`,
+                },
+              ],
+            }),
+          }}
+        />
         <Analytics />
         <SpeedInsights />
       </body>
