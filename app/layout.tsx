@@ -123,9 +123,15 @@ export default function RootLayout({
                   description: SITE_DESCRIPTION,
                 },
                 {
-                  "@type": "Organization",
+                  "@type": "WebApplication",
                   name: SITE_TITLE,
                   url: `${SITE_URL}/`,
+                  applicationCategory: "UtilityApplication",
+                  operatingSystem: "Any",
+                  offers: {
+                    "@type": "Offer",
+                    price: "0"
+                  }
                 },
               ],
             }),
