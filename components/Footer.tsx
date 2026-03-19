@@ -37,7 +37,7 @@ export default function Footer() {
               Privacy
             </a>
             <a
-              href="/sitemap"
+              href="/site-map"
               className="hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400"
             >
               Sitemap
