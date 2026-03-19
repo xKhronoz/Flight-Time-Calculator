@@ -6,7 +6,7 @@ export const metadata = {
 const pages = [
   { path: "/", title: "Home" },
   { path: "/privacy", title: "Privacy" },
-  { path: "/sitemap", title: "Sitemap" },
+  { path: "/site-map", title: "Sitemap" },
 ];
 
 export default function SitemapPage() {
